@@ -850,73 +850,74 @@ def card_tummytime_day(context, child, date=None):
     }
 
 
-@register.inclusion_tag("cards/medication_reminders.html", takes_context=True)
-def card_medication_reminders(context, child):
+@register.inclusion_tag("cards/medication_last.html", takes_context=True)
+def card_medication_last(context, child):
     """
-    Medication reminders for a child based on active schedules.
-    Shows overdue, upcoming, and already-given medications.
+    Information about the most recent medication and next due schedule.
     :param child: an instance of the Child model.
-    :returns: a dictionary with medication reminder data.
+    :returns: a dictionary with the most recent Medication instance and
+              the next due schedule (if any).
     """
-    schedules = models.MedicationSchedule.objects.filter(child=child, active=True)
+    instance = (
+        models.Medication.objects.filter(child=child)
+        .filter(**_filter_data_age(context))
+        .order_by("-time")
+        .first()
+    )
+    empty = not instance
+
+    # Find all due (not yet given) schedules for today.
     now = timezone.localtime()
     today = now.date()
-    medications = []
-    overdue_count = 0
+    pending = []
 
-    for schedule in schedules:
+    for schedule in models.MedicationSchedule.objects.filter(child=child, active=True):
         if not schedule.is_due_today():
             continue
 
         if schedule.frequency == models.MedicationSchedule.FREQUENCY_INTERVAL:
-            last_given = (
+            last = (
                 models.Medication.objects.filter(
                     medication_schedule=schedule, child=child
                 )
                 .order_by("-time")
                 .first()
             )
-            due_time = schedule.next_due_time(last_given.time if last_given else None)
-            given = (
-                last_given is not None
-                and (now - last_given.time).total_seconds()
-                < (schedule.interval_hours or 0) * 3600
+            due = schedule.next_due_time(last.time if last else None)
+            # Only treat as having a specific time if there's a previous dose
+            # to measure the interval from.  First dose is always "due now".
+            has_specific_time = last is not None
+            # Interval schedules always show with next due time.
+            pending.append(
+                {
+                    "schedule": schedule,
+                    "due_time": due,
+                    "overdue": now > due,
+                    "has_specific_time": bool(has_specific_time),
+                }
             )
-            given_entry = last_given
         else:
-            due_time = schedule.next_due_time()
-            given_today = (
-                models.Medication.objects.filter(
-                    medication_schedule=schedule,
-                    child=child,
-                    time__date=today,
+            due = schedule.next_due_time()
+            given = models.Medication.objects.filter(
+                medication_schedule=schedule, child=child, time__date=today
+            ).exists()
+            if not given:
+                pending.append(
+                    {
+                        "schedule": schedule,
+                        "due_time": due,
+                        "overdue": now > due,
+                        "has_specific_time": schedule.schedule_time is not None,
+                    }
                 )
-                .order_by("-time")
-                .first()
-            )
-            given = given_today is not None
-            given_entry = given_today
 
-        overdue = not given and now > due_time
-        if overdue:
-            overdue_count += 1
-
-        medications.append(
-            {
-                "schedule": schedule,
-                "due_time": due_time,
-                "given": given,
-                "given_entry": given_entry,
-                "overdue": overdue,
-            }
-        )
-
-    medications.sort(key=lambda x: (not x["overdue"], x["due_time"]))
+    # Sort: overdue first, then by due time.
+    pending.sort(key=lambda x: (not x["overdue"], x["due_time"]))
 
     return {
         "type": "medication",
-        "medications": medications,
-        "overdue_count": overdue_count,
-        "empty": len(medications) == 0,
+        "medication": instance,
+        "pending": pending,
+        "empty": empty and len(pending) == 0,
         "hide_empty": _hide_empty(context),
     }

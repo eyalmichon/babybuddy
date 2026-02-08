@@ -27,3 +27,36 @@
     {% endif %}
     {% include 'babybuddy/form.html' %}
 {% endblock %}
+{% block javascript %}
+    <script>
+        (function() {
+            var freq = document.getElementById("id_frequency");
+            if (!freq) return;
+
+            var timeRow = document.getElementById("id_schedule_time");
+            var intervalRow = document.getElementById("id_interval_hours");
+            var daysContainer = document.querySelector(".pill-container");
+
+            // Walk up to the nearest .row ancestor for each field.
+            function getRow(el) {
+                while (el && !el.classList.contains("row")) el = el.parentElement;
+                return el;
+            }
+
+            var timeSection = timeRow ? getRow(timeRow) : null;
+            var intervalSection = intervalRow ? getRow(intervalRow) : null;
+            // Days container is inside a .row > .row structure.
+            var daysSection = daysContainer ? getRow(getRow(daysContainer)) : null;
+
+            function toggle() {
+                var val = freq.value;
+                if (timeSection) timeSection.style.display = (val === "interval") ? "none" : "";
+                if (intervalSection) intervalSection.style.display = (val === "interval") ? "" : "none";
+                if (daysSection) daysSection.style.display = (val === "weekly") ? "" : "none";
+            }
+
+            freq.addEventListener("change", toggle);
+            toggle();
+        })();
+    </script>
+{% endblock %}

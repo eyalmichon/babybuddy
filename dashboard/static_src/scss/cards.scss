@@ -109,6 +109,19 @@
     }
 }
 
+.card-medication {
+    border-color: $purple;
+
+    .card-header, .card-header a {
+        background-color: $purple;
+        color: map.get($theme-colors, 'light');
+    }
+
+    .card-body {
+        color: $purple;
+    }
+}
+
 .card-tummytime {
     border-color: map.get($theme-colors, 'success');
 

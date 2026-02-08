@@ -452,6 +452,25 @@ class MedicationScheduleForm(CoreModelForm):
             "notes": forms.Textarea(attrs={"rows": 5}),
         }
 
+    def clean(self):
+        cleaned = super().clean()
+        freq = cleaned.get("frequency")
+
+        # Clear day-of-week fields when not using weekly frequency.
+        if freq != models.MedicationSchedule.FREQUENCY_WEEKLY:
+            for day in models.MedicationSchedule.DAY_FIELDS:
+                cleaned[day] = False
+
+        # Clear interval_hours when not using interval frequency.
+        if freq != models.MedicationSchedule.FREQUENCY_INTERVAL:
+            cleaned["interval_hours"] = None
+
+        # Clear schedule_time when using interval frequency.
+        if freq == models.MedicationSchedule.FREQUENCY_INTERVAL:
+            cleaned["schedule_time"] = None
+
+        return cleaned
+
 
 class TemperatureForm(CoreModelForm, TaggableModelForm):
     fieldsets = [

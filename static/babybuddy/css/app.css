@@ -8,7 +8,7 @@
 [data-bs-theme=light] {
   --bs-blue: #0d6efd;
   --bs-indigo: #6610f2;
-  --bs-purple: #6f42c1;
+  --bs-purple: #7c4dff;
   --bs-pink: #d63384;
   --bs-red: #dc3545;
   --bs-orange: #fd7e14;
@@ -12166,6 +12166,17 @@ textarea.form-control-lg {
 }
 .card-statistics .card-body .container, .card-timer .card-body .container {
   padding: 0;
+}
+
+.card-medication {
+  border-color: #7c4dff;
+}
+.card-medication .card-header, .card-medication .card-header a {
+  background-color: #7c4dff;
+  color: #f8f9fa;
+}
+.card-medication .card-body {
+  color: #7c4dff;
 }
 
 .card-tummytime {

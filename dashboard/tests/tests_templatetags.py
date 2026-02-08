@@ -362,30 +362,28 @@ class TemplateTagsTestCase(TestCase):
         stats = {"count": 3, "total": timezone.timedelta(0, 300)}
         self.assertEqual(data["stats"], stats)
 
-    def test_card_medication_reminders_empty(self):
-        data = cards.card_medication_reminders(self.context, self.child)
+    def test_card_medication_last_empty(self):
+        data = cards.card_medication_last(self.context, self.child)
         self.assertEqual(data["type"], "medication")
         self.assertTrue(data["empty"])
-        self.assertEqual(data["overdue_count"], 0)
-        self.assertEqual(len(data["medications"]), 0)
+        self.assertIsNone(data["medication"])
+        self.assertEqual(len(data["pending"]), 0)
 
-    def test_card_medication_reminders_with_schedule(self):
-        schedule = models.MedicationSchedule.objects.create(
+    def test_card_medication_last_with_entry(self):
+        models.Medication.objects.create(
             child=self.child,
             name="Vitamin D",
             amount=400,
             amount_unit="IU",
-            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
-            schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
-            active=True,
+            time=timezone.localtime(),
         )
-        data = cards.card_medication_reminders(self.context, self.child)
+        data = cards.card_medication_last(self.context, self.child)
         self.assertEqual(data["type"], "medication")
         self.assertFalse(data["empty"])
-        self.assertEqual(len(data["medications"]), 1)
-        self.assertEqual(data["medications"][0]["schedule"], schedule)
+        self.assertIsInstance(data["medication"], models.Medication)
+        self.assertEqual(data["medication"].name, "Vitamin D")
 
-    def test_card_medication_reminders_given(self):
+    def test_card_medication_last_with_pending(self):
         schedule = models.MedicationSchedule.objects.create(
             child=self.child,
             name="Vitamin D",
@@ -393,19 +391,70 @@ class TemplateTagsTestCase(TestCase):
             schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
             active=True,
         )
-        # Mark as given today
+        data = cards.card_medication_last(self.context, self.child)
+        self.assertFalse(data["empty"])
+        self.assertEqual(len(data["pending"]), 1)
+        self.assertEqual(data["pending"][0]["schedule"], schedule)
+
+    def test_card_medication_last_multiple_pending(self):
+        models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="Vitamin D",
+            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
+            active=True,
+        )
+        models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="Ibuprofen",
+            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            schedule_time=timezone.datetime.strptime("08:00", "%H:%M").time(),
+            active=True,
+        )
+        data = cards.card_medication_last(self.context, self.child)
+        self.assertEqual(len(data["pending"]), 2)
+
+    def test_card_medication_last_given_clears_pending(self):
+        schedule = models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="Vitamin D",
+            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
+            active=True,
+        )
         models.Medication.objects.create(
             child=self.child,
             medication_schedule=schedule,
             name="Vitamin D",
             time=timezone.localtime(),
         )
-        data = cards.card_medication_reminders(self.context, self.child)
+        data = cards.card_medication_last(self.context, self.child)
         self.assertFalse(data["empty"])
-        self.assertTrue(data["medications"][0]["given"])
-        self.assertEqual(data["overdue_count"], 0)
+        self.assertIsInstance(data["medication"], models.Medication)
+        self.assertEqual(len(data["pending"]), 0)
 
-    def test_card_medication_reminders_inactive_excluded(self):
+    def test_card_medication_last_interval_stays_after_given(self):
+        schedule = models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="Ibuprofen",
+            frequency=models.MedicationSchedule.FREQUENCY_INTERVAL,
+            interval_hours=6,
+            active=True,
+        )
+        # Give the medication now.
+        models.Medication.objects.create(
+            child=self.child,
+            medication_schedule=schedule,
+            name="Ibuprofen",
+            time=timezone.localtime(),
+        )
+        data = cards.card_medication_last(self.context, self.child)
+        # Interval schedule should still appear in pending with next due time.
+        self.assertEqual(len(data["pending"]), 1)
+        self.assertEqual(data["pending"][0]["schedule"], schedule)
+        self.assertFalse(data["pending"][0]["overdue"])
+
+    def test_card_medication_last_inactive_excluded(self):
         models.MedicationSchedule.objects.create(
             child=self.child,
             name="Inactive Med",
@@ -413,5 +462,6 @@ class TemplateTagsTestCase(TestCase):
             schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
             active=False,
         )
-        data = cards.card_medication_reminders(self.context, self.child)
+        data = cards.card_medication_last(self.context, self.child)
         self.assertTrue(data["empty"])
+        self.assertEqual(len(data["pending"]), 0)
