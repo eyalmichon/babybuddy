@@ -121,12 +121,6 @@
       "src": "fontawesome"
     },
     {
-      "uid": "df9d9b2fb366c10427ffb727943db912",
-      "css": "sleep",
-      "code": 62006,
-      "src": "fontawesome"
-    },
-    {
       "uid": "bc4b94dd7a9a1dd2e02f9e4648062596",
       "css": "source",
       "code": 61734,
@@ -280,6 +274,18 @@
       "uid": "fdfbd1fcbd4cb229716a810801a5f207",
       "css": "angle-double-right",
       "code": 61697,
+      "src": "fontawesome"
+    },
+    {
+      "uid": "df9d9b2fb366c10427ffb727943db912",
+      "css": "sleep",
+      "code": 62006,
+      "src": "fontawesome"
+    },
+    {
+      "uid": "46120eb259799eab0dac0691137e5706",
+      "css": "medication",
+      "code": 61690,
       "src": "fontawesome"
     }
   ]
