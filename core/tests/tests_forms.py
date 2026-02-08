@@ -668,6 +668,111 @@ class TaggedFormsTestCase(FormsTestCaseBase):
         self.assertContains(page, "Note entry deleted")
 
 
+class MedicationFormsTestCase(FormsTestCaseBase):
+    @classmethod
+    def setUpClass(cls):
+        super(MedicationFormsTestCase, cls).setUpClass()
+        cls.med = models.Medication.objects.create(
+            child=cls.child,
+            name="Vitamin D",
+            amount=400,
+            amount_unit="IU",
+            time=timezone.localtime() - timezone.timedelta(days=1),
+        )
+
+    def test_add(self):
+        params = {
+            "child": self.child.id,
+            "name": "Ibuprofen",
+            "amount": "100",
+            "amount_unit": "mg",
+            "time": self.localtime_string(),
+        }
+        page = self.c.post("/medications/add/", params, follow=True)
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(
+            page, "Medication entry for {} added".format(str(self.child))
+        )
+
+    def test_edit(self):
+        params = {
+            "child": self.med.child.id,
+            "name": "Updated Med",
+            "amount": "200",
+            "amount_unit": "mg",
+            "time": self.localtime_string(),
+        }
+        page = self.c.post("/medications/{}/".format(self.med.id), params, follow=True)
+        self.assertEqual(page.status_code, 200)
+        self.med.refresh_from_db()
+        self.assertEqual(self.med.name, "Updated Med")
+        self.assertContains(
+            page, "Medication entry for {} updated".format(str(self.med.child))
+        )
+
+    def test_delete(self):
+        page = self.c.post("/medications/{}/delete/".format(self.med.id), follow=True)
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, "Medication entry deleted")
+
+
+class MedicationScheduleFormsTestCase(FormsTestCaseBase):
+    @classmethod
+    def setUpClass(cls):
+        super(MedicationScheduleFormsTestCase, cls).setUpClass()
+        cls.schedule = models.MedicationSchedule.objects.create(
+            child=cls.child,
+            name="Vitamin D",
+            frequency="daily",
+            schedule_time="09:00:00",
+            active=True,
+        )
+
+    def test_add(self):
+        params = {
+            "child": self.child.id,
+            "name": "Ibuprofen",
+            "frequency": "daily",
+            "schedule_time": "08:00:00",
+            "active": True,
+        }
+        page = self.c.post("/medication-schedules/add/", params, follow=True)
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(
+            page,
+            "Medication Schedule entry for {} added".format(str(self.child)),
+        )
+
+    def test_edit(self):
+        params = {
+            "child": self.schedule.child.id,
+            "name": "Updated Schedule",
+            "frequency": "daily",
+            "schedule_time": "10:00:00",
+            "active": True,
+        }
+        page = self.c.post(
+            "/medication-schedules/{}/".format(self.schedule.id),
+            params,
+            follow=True,
+        )
+        self.assertEqual(page.status_code, 200)
+        self.schedule.refresh_from_db()
+        self.assertEqual(self.schedule.name, "Updated Schedule")
+        self.assertContains(
+            page,
+            "Medication Schedule entry for {} updated".format(str(self.schedule.child)),
+        )
+
+    def test_delete(self):
+        page = self.c.post(
+            "/medication-schedules/{}/delete/".format(self.schedule.id),
+            follow=True,
+        )
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, "Medication Schedule entry deleted")
+
+
 class TemperatureFormsTestCase(FormsTestCaseBase):
     @classmethod
     def setUpClass(cls):

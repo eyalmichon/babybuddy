@@ -221,6 +221,62 @@ class ViewsTestCase(TestCase):
         page = self.c.get("/tummy-time/{}/delete/".format(entry.id))
         self.assertEqual(page.status_code, 200)
 
+    def test_medication_views(self):
+        page = self.c.get("/medications/")
+        self.assertEqual(page.status_code, 200)
+        page = self.c.get("/medications/add/")
+        self.assertEqual(page.status_code, 200)
+
+        child = models.Child.objects.first()
+        med = models.Medication.objects.create(
+            child=child,
+            name="Vitamin D",
+            time=timezone.localtime(),
+        )
+        page = self.c.get("/medications/{}/".format(med.id))
+        self.assertEqual(page.status_code, 200)
+        page = self.c.get("/medications/{}/delete/".format(med.id))
+        self.assertEqual(page.status_code, 200)
+
+    def test_medicationschedule_views(self):
+        page = self.c.get("/medication-schedules/")
+        self.assertEqual(page.status_code, 200)
+        page = self.c.get("/medication-schedules/add/")
+        self.assertEqual(page.status_code, 200)
+
+        child = models.Child.objects.first()
+        schedule = models.MedicationSchedule.objects.create(
+            child=child,
+            name="Vitamin D",
+            frequency="daily",
+        )
+        page = self.c.get("/medication-schedules/{}/".format(schedule.id))
+        self.assertEqual(page.status_code, 200)
+        page = self.c.get("/medication-schedules/{}/delete/".format(schedule.id))
+        self.assertEqual(page.status_code, 200)
+
+    def test_medication_give_view(self):
+        child = models.Child.objects.first()
+        schedule = models.MedicationSchedule.objects.create(
+            child=child,
+            name="Ibuprofen",
+            amount=100,
+            amount_unit="mg",
+            frequency="daily",
+        )
+        # GET should not be allowed
+        page = self.c.get("/medication-schedules/{}/give/".format(schedule.id))
+        self.assertEqual(page.status_code, 405)
+        # POST should create a Medication and redirect
+        page = self.c.post(
+            "/medication-schedules/{}/give/".format(schedule.id), follow=True
+        )
+        self.assertEqual(page.status_code, 200)
+        med = models.Medication.objects.filter(medication_schedule=schedule).first()
+        self.assertIsNotNone(med)
+        self.assertEqual(med.name, "Ibuprofen")
+        self.assertEqual(med.amount, 100)
+
     def test_weight_views(self):
         page = self.c.get("/weight/")
         self.assertEqual(page.status_code, 200)

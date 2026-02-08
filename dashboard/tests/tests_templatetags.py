@@ -361,3 +361,57 @@ class TemplateTagsTestCase(TestCase):
         self.assertIsInstance(data["last"], models.TummyTime)
         stats = {"count": 3, "total": timezone.timedelta(0, 300)}
         self.assertEqual(data["stats"], stats)
+
+    def test_card_medication_reminders_empty(self):
+        data = cards.card_medication_reminders(self.context, self.child)
+        self.assertEqual(data["type"], "medication")
+        self.assertTrue(data["empty"])
+        self.assertEqual(data["overdue_count"], 0)
+        self.assertEqual(len(data["medications"]), 0)
+
+    def test_card_medication_reminders_with_schedule(self):
+        schedule = models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="Vitamin D",
+            amount=400,
+            amount_unit="IU",
+            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
+            active=True,
+        )
+        data = cards.card_medication_reminders(self.context, self.child)
+        self.assertEqual(data["type"], "medication")
+        self.assertFalse(data["empty"])
+        self.assertEqual(len(data["medications"]), 1)
+        self.assertEqual(data["medications"][0]["schedule"], schedule)
+
+    def test_card_medication_reminders_given(self):
+        schedule = models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="Vitamin D",
+            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
+            active=True,
+        )
+        # Mark as given today
+        models.Medication.objects.create(
+            child=self.child,
+            medication_schedule=schedule,
+            name="Vitamin D",
+            time=timezone.localtime(),
+        )
+        data = cards.card_medication_reminders(self.context, self.child)
+        self.assertFalse(data["empty"])
+        self.assertTrue(data["medications"][0]["given"])
+        self.assertEqual(data["overdue_count"], 0)
+
+    def test_card_medication_reminders_inactive_excluded(self):
+        models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="Inactive Med",
+            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
+            active=False,
+        )
+        data = cards.card_medication_reminders(self.context, self.child)
+        self.assertTrue(data["empty"])

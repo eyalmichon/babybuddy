@@ -643,6 +643,109 @@ class TagsAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
         self.assertCountEqual(list(note.tags.names()), data["tags"])
 
 
+class MedicationAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
+    endpoint = reverse("api:medication-list")
+    model = models.Medication
+    delete_id = None  # Overridden in setUp
+
+    def setUp(self):
+        super().setUp()
+        child = models.Child.objects.first()
+        self.med = models.Medication.objects.create(
+            child=child,
+            name="Vitamin D",
+            amount=400,
+            amount_unit="IU",
+            time="2017-11-18T12:00:00-05:00",
+        )
+        self.delete_id = self.med.id
+
+    def test_get(self):
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(response.data["results"]), 0)
+        result = response.data["results"][0]
+        self.assertEqual(result["name"], "Vitamin D")
+
+    def test_post(self):
+        data = {
+            "child": 1,
+            "name": "Ibuprofen",
+            "amount": 100,
+            "amount_unit": "mg",
+            "time": "2017-11-20T10:00:00-05:00",
+        }
+        response = self.client.post(self.endpoint, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        obj = models.Medication.objects.get(pk=response.data["id"])
+        self.assertEqual(obj.name, "Ibuprofen")
+        self.assertEqual(obj.amount, 100)
+
+    def test_patch(self):
+        endpoint = "{}{}/".format(self.endpoint, self.med.id)
+        response = self.client.patch(endpoint, {"name": "Updated Med"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["name"], "Updated Med")
+
+    def test_delete(self):
+        endpoint = "{}{}/".format(self.endpoint, self.med.id)
+        response = self.client.delete(endpoint)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+
+class MedicationScheduleAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
+    endpoint = reverse("api:medicationschedule-list")
+    model = models.MedicationSchedule
+    delete_id = None
+
+    def setUp(self):
+        super().setUp()
+        child = models.Child.objects.first()
+        self.schedule = models.MedicationSchedule.objects.create(
+            child=child,
+            name="Vitamin D",
+            amount=400,
+            amount_unit="IU",
+            frequency="daily",
+            schedule_time="09:00:00",
+            active=True,
+        )
+        self.delete_id = self.schedule.id
+
+    def test_get(self):
+        response = self.client.get(self.endpoint)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(response.data["results"]), 0)
+        result = response.data["results"][0]
+        self.assertEqual(result["name"], "Vitamin D")
+        self.assertEqual(result["frequency"], "daily")
+
+    def test_post(self):
+        data = {
+            "child": 1,
+            "name": "Ibuprofen",
+            "frequency": "interval",
+            "interval_hours": 6,
+            "active": True,
+        }
+        response = self.client.post(self.endpoint, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        obj = models.MedicationSchedule.objects.get(pk=response.data["id"])
+        self.assertEqual(obj.name, "Ibuprofen")
+        self.assertEqual(obj.frequency, "interval")
+
+    def test_patch(self):
+        endpoint = "{}{}/".format(self.endpoint, self.schedule.id)
+        response = self.client.patch(endpoint, {"active": False}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data["active"])
+
+    def test_delete(self):
+        endpoint = "{}{}/".format(self.endpoint, self.schedule.id)
+        response = self.client.delete(endpoint)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+
 class TemperatureAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
     endpoint = reverse("api:temperature-list")
     model = models.Temperature

@@ -382,6 +382,98 @@ class TummyTimeTestCase(TestCase):
         self.assertEqual(tummy_time.duration, tummy_time.end - tummy_time.start)
 
 
+class MedicationScheduleTestCase(TestCase):
+    def setUp(self):
+        call_command("migrate", verbosity=0)
+        self.child = models.Child.objects.create(
+            first_name="First", last_name="Last", birth_date=timezone.localdate()
+        )
+        self.schedule = models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="Vitamin D",
+            amount=400,
+            amount_unit="IU",
+            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
+            active=True,
+        )
+
+    def test_medicationschedule_create(self):
+        self.assertEqual(self.schedule, models.MedicationSchedule.objects.first())
+        self.assertEqual(str(self.schedule), "Vitamin D")
+        self.assertEqual(self.schedule.amount, 400)
+        self.assertEqual(self.schedule.amount_unit, "IU")
+
+    def test_is_due_today_daily(self):
+        self.schedule.frequency = models.MedicationSchedule.FREQUENCY_DAILY
+        self.assertTrue(self.schedule.is_due_today())
+
+    def test_is_due_today_interval(self):
+        self.schedule.frequency = models.MedicationSchedule.FREQUENCY_INTERVAL
+        self.assertTrue(self.schedule.is_due_today())
+
+    def test_is_due_today_weekly(self):
+        self.schedule.frequency = models.MedicationSchedule.FREQUENCY_WEEKLY
+        today_weekday = timezone.localdate().weekday()
+        day_field = models.MedicationSchedule.DAY_FIELDS[today_weekday]
+        setattr(self.schedule, day_field, True)
+        self.assertTrue(self.schedule.is_due_today())
+
+    def test_is_not_due_today_weekly(self):
+        self.schedule.frequency = models.MedicationSchedule.FREQUENCY_WEEKLY
+        # Set all days to False
+        for day in models.MedicationSchedule.DAY_FIELDS:
+            setattr(self.schedule, day, False)
+        # Set tomorrow's day to True instead
+        tomorrow_weekday = (timezone.localdate().weekday() + 1) % 7
+        setattr(
+            self.schedule,
+            models.MedicationSchedule.DAY_FIELDS[tomorrow_weekday],
+            True,
+        )
+        self.assertFalse(self.schedule.is_due_today())
+
+    def test_get_scheduled_days(self):
+        self.schedule.monday = True
+        self.schedule.wednesday = True
+        self.schedule.friday = True
+        self.assertEqual(self.schedule.get_scheduled_days(), [0, 2, 4])
+
+    def test_next_due_time_daily(self):
+        self.schedule.frequency = models.MedicationSchedule.FREQUENCY_DAILY
+        due = self.schedule.next_due_time()
+        self.assertEqual(due.time(), self.schedule.schedule_time)
+
+    def test_next_due_time_interval(self):
+        self.schedule.frequency = models.MedicationSchedule.FREQUENCY_INTERVAL
+        self.schedule.interval_hours = 6
+        ref = timezone.localtime() - timezone.timedelta(hours=3)
+        due = self.schedule.next_due_time(ref)
+        expected = ref + timezone.timedelta(hours=6)
+        self.assertEqual(due, expected)
+
+
+class MedicationTestCase(TestCase):
+    def setUp(self):
+        call_command("migrate", verbosity=0)
+        self.child = models.Child.objects.create(
+            first_name="First", last_name="Last", birth_date=timezone.localdate()
+        )
+        self.med = models.Medication.objects.create(
+            child=self.child,
+            name="Vitamin D",
+            amount=400,
+            amount_unit="IU",
+            time=timezone.localtime() - timezone.timedelta(days=1),
+        )
+
+    def test_medication_create(self):
+        self.assertEqual(self.med, models.Medication.objects.first())
+        self.assertEqual(str(self.med), "Medication")
+        self.assertEqual(self.med.name, "Vitamin D")
+        self.assertEqual(self.med.amount, 400)
+
+
 class WeightTestCase(TestCase):
     def setUp(self):
         call_command("migrate", verbosity=0)
