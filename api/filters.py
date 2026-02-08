@@ -91,6 +91,17 @@ class SleepFilter(StartEndFieldFilter, TagsFieldFilter):
         model = models.Sleep
 
 
+class MedicationFilter(TimeFieldFilter, TagsFieldFilter):
+    class Meta(TimeFieldFilter.Meta):
+        model = models.Medication
+
+
+class MedicationScheduleFilter(ChildFieldFilter):
+    class Meta(ChildFieldFilter.Meta):
+        model = models.MedicationSchedule
+        fields = sorted(ChildFieldFilter.Meta.fields + ["active", "frequency"])
+
+
 class TemperatureFilter(TimeFieldFilter, TagsFieldFilter):
     class Meta(TimeFieldFilter.Meta):
         model = models.Temperature

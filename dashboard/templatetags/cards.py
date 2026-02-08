@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import datetime
+
 from django import template
 from django.db.models import Avg, Count, Q, Sum
 from django.db.models.functions import TruncDate
@@ -844,5 +846,77 @@ def card_tummytime_day(context, child, date=None):
         "instances": instances,
         "last": instances.first(),
         "empty": empty,
+        "hide_empty": _hide_empty(context),
+    }
+
+
+@register.inclusion_tag("cards/medication_reminders.html", takes_context=True)
+def card_medication_reminders(context, child):
+    """
+    Medication reminders for a child based on active schedules.
+    Shows overdue, upcoming, and already-given medications.
+    :param child: an instance of the Child model.
+    :returns: a dictionary with medication reminder data.
+    """
+    schedules = models.MedicationSchedule.objects.filter(child=child, active=True)
+    now = timezone.localtime()
+    today = now.date()
+    medications = []
+    overdue_count = 0
+
+    for schedule in schedules:
+        if not schedule.is_due_today():
+            continue
+
+        if schedule.frequency == models.MedicationSchedule.FREQUENCY_INTERVAL:
+            last_given = (
+                models.Medication.objects.filter(
+                    medication_schedule=schedule, child=child
+                )
+                .order_by("-time")
+                .first()
+            )
+            due_time = schedule.next_due_time(last_given.time if last_given else None)
+            given = (
+                last_given is not None
+                and (now - last_given.time).total_seconds()
+                < (schedule.interval_hours or 0) * 3600
+            )
+            given_entry = last_given
+        else:
+            due_time = schedule.next_due_time()
+            given_today = (
+                models.Medication.objects.filter(
+                    medication_schedule=schedule,
+                    child=child,
+                    time__date=today,
+                )
+                .order_by("-time")
+                .first()
+            )
+            given = given_today is not None
+            given_entry = given_today
+
+        overdue = not given and now > due_time
+        if overdue:
+            overdue_count += 1
+
+        medications.append(
+            {
+                "schedule": schedule,
+                "due_time": due_time,
+                "given": given,
+                "given_entry": given_entry,
+                "overdue": overdue,
+            }
+        )
+
+    medications.sort(key=lambda x: (not x["overdue"], x["due_time"]))
+
+    return {
+        "type": "medication",
+        "medications": medications,
+        "overdue_count": overdue_count,
+        "empty": len(medications) == 0,
         "hide_empty": _hide_empty(context),
     }

@@ -110,6 +110,22 @@ class TagViewSet(viewsets.ModelViewSet):
     ordering = "name"
 
 
+class MedicationViewSet(viewsets.ModelViewSet):
+    queryset = models.Medication.objects.all()
+    serializer_class = serializers.MedicationSerializer
+    filterset_class = filters.MedicationFilter
+    ordering_fields = ("name", "time")
+    ordering = "-time"
+
+
+class MedicationScheduleViewSet(viewsets.ModelViewSet):
+    queryset = models.MedicationSchedule.objects.all()
+    serializer_class = serializers.MedicationScheduleSerializer
+    filterset_fields = ("child", "active", "frequency")
+    ordering_fields = ("name",)
+    ordering = "name"
+
+
 class TemperatureViewSet(viewsets.ModelViewSet):
     queryset = models.Temperature.objects.all()
     serializer_class = serializers.TemperatureSerializer

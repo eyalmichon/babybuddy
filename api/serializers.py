@@ -229,6 +229,46 @@ class TagSerializer(serializers.HyperlinkedModelSerializer):
         }
 
 
+class MedicationSerializer(CoreModelSerializer, TaggableSerializer):
+    class Meta:
+        model = models.Medication
+        fields = (
+            "id",
+            "child",
+            "medication_schedule",
+            "name",
+            "amount",
+            "amount_unit",
+            "time",
+            "notes",
+            "tags",
+        )
+
+
+class MedicationScheduleSerializer(CoreModelSerializer):
+    class Meta:
+        model = models.MedicationSchedule
+        fields = (
+            "id",
+            "child",
+            "name",
+            "amount",
+            "amount_unit",
+            "frequency",
+            "schedule_time",
+            "interval_hours",
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+            "active",
+            "notes",
+        )
+
+
 class TemperatureSerializer(CoreModelSerializer, TaggableSerializer):
     class Meta:
         model = models.Temperature
