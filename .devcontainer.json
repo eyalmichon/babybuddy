@@ -7,7 +7,10 @@
       "version": "18"
     },
     "ghcr.io/devcontainers-contrib/features/gulp-cli:2": {},
-    "ghcr.io/devcontainers-contrib/features/pipenv:2": {}
+    "ghcr.io/devcontainers-contrib/features/pipenv:2": {},
+    "ghcr.io/devcontainers-contrib/features/apt-packages:1": {
+      "packages": "gettext,libpq-dev"
+    }
   },
   "customizations": {
     "vscode": {
@@ -32,10 +35,11 @@
       }
     }
   },
+  "runArgs": ["--name", "babybuddy"],
   "containerEnv": {
     "DJANGO_SETTINGS_MODULE": "babybuddy.settings.development",
     "PIPENV_VENV_IN_PROJECT": "1"
   },
-  "postCreateCommand": "pipenv install --dev && npm install --include=dev && gulp migrate",
+  "postCreateCommand": "pipenv install --dev && npm install --include=dev && npx lefthook install && gulp build && gulp migrate",
   "forwardPorts": [8000]
 }
