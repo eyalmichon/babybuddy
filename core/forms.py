@@ -373,6 +373,86 @@ class TagAdminForm(CoreModelForm):
         }
 
 
+class MedicationForm(CoreModelForm, TaggableModelForm):
+    fieldsets = [
+        {
+            "fields": ["child", "name", "amount", "amount_unit", "time"],
+            "layout": "required",
+        },
+        {"fields": ["medication_schedule", "notes", "tags"], "layout": "advanced"},
+    ]
+
+    class Meta:
+        model = models.Medication
+        fields = [
+            "child",
+            "name",
+            "amount",
+            "amount_unit",
+            "time",
+            "medication_schedule",
+            "notes",
+            "tags",
+        ]
+        widgets = {
+            "child": ChildRadioSelect,
+            "time": DateTimeInput(),
+            "notes": forms.Textarea(attrs={"rows": 5}),
+        }
+
+
+class MedicationScheduleForm(CoreModelForm):
+    fieldsets = [
+        {
+            "fields": ["child", "name", "amount", "amount_unit"],
+            "layout": "required",
+        },
+        {
+            "fields": ["frequency", "schedule_time", "interval_hours"],
+        },
+        {
+            "fields": [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ],
+            "layout": "choices",
+            "layout_attrs": {"label": "Days of week"},
+        },
+        {"fields": ["active", "notes"], "layout": "advanced"},
+    ]
+
+    class Meta:
+        model = models.MedicationSchedule
+        fields = [
+            "child",
+            "name",
+            "amount",
+            "amount_unit",
+            "frequency",
+            "schedule_time",
+            "interval_hours",
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+            "active",
+            "notes",
+        ]
+        widgets = {
+            "child": ChildRadioSelect,
+            "schedule_time": TimeInput(),
+            "notes": forms.Textarea(attrs={"rows": 5}),
+        }
+
+
 class TemperatureForm(CoreModelForm, TaggableModelForm):
     fieldsets = [
         {

@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.views import View
 from django.views.generic.base import RedirectView, TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
@@ -445,6 +446,88 @@ class TemperatureDelete(CoreDeleteView):
     model = models.Temperature
     permission_required = ("core.delete_temperature",)
     success_url = reverse_lazy("core:temperature-list")
+
+
+class MedicationList(
+    PermissionRequiredMixin, BabyBuddyPaginatedView, BabyBuddyFilterView
+):
+    model = models.Medication
+    template_name = "core/medication_list.html"
+    permission_required = ("core.view_medication",)
+    filterset_class = filters.MedicationFilter
+
+
+class MedicationAdd(CoreAddView):
+    model = models.Medication
+    permission_required = ("core.add_medication",)
+    form_class = forms.MedicationForm
+    success_url = reverse_lazy("core:medication-list")
+
+
+class MedicationUpdate(CoreUpdateView):
+    model = models.Medication
+    permission_required = ("core.change_medication",)
+    form_class = forms.MedicationForm
+    success_url = reverse_lazy("core:medication-list")
+
+
+class MedicationDelete(CoreDeleteView):
+    model = models.Medication
+    permission_required = ("core.delete_medication",)
+    success_url = reverse_lazy("core:medication-list")
+
+
+class MedicationScheduleList(
+    PermissionRequiredMixin, BabyBuddyPaginatedView, BabyBuddyFilterView
+):
+    model = models.MedicationSchedule
+    template_name = "core/medicationschedule_list.html"
+    permission_required = ("core.view_medicationschedule",)
+    filterset_class = filters.MedicationScheduleFilter
+
+
+class MedicationScheduleAdd(CoreAddView):
+    model = models.MedicationSchedule
+    permission_required = ("core.add_medicationschedule",)
+    form_class = forms.MedicationScheduleForm
+    success_url = reverse_lazy("core:medicationschedule-list")
+
+
+class MedicationScheduleUpdate(CoreUpdateView):
+    model = models.MedicationSchedule
+    permission_required = ("core.change_medicationschedule",)
+    form_class = forms.MedicationScheduleForm
+    success_url = reverse_lazy("core:medicationschedule-list")
+
+
+class MedicationScheduleDelete(CoreDeleteView):
+    model = models.MedicationSchedule
+    permission_required = ("core.delete_medicationschedule",)
+    success_url = reverse_lazy("core:medicationschedule-list")
+
+
+class MedicationGive(PermissionRequiredMixin, View):
+    """Quick-give: creates a Medication log entry from a schedule and redirects back."""
+
+    permission_required = ("core.add_medication",)
+
+    def post(self, request, pk):
+        schedule = models.MedicationSchedule.objects.get(pk=pk)
+        models.Medication.objects.create(
+            child=schedule.child,
+            medication_schedule=schedule,
+            time=timezone.localtime(),
+            name=schedule.name,
+            amount=schedule.amount,
+            amount_unit=schedule.amount_unit or "",
+        )
+        messages.success(
+            request,
+            _("%(name)s marked as given.") % {"name": schedule.name},
+        )
+        return HttpResponseRedirect(
+            request.META.get("HTTP_REFERER", reverse("dashboard:dashboard"))
+        )
 
 
 class Timeline(LoginRequiredMixin, TemplateView):

@@ -263,6 +263,25 @@
 {% trans "Bottle Feeding" %}
 </a>
 {% endif %}
+{% if perms.core.view_medication %}
+    <a class="dropdown-item{% if request.path == '/medications/' %} active{% endif %}"
+       href="{% url 'core:medication-list' %}">
+        <i class="icon-medication" aria-hidden="true"></i>
+        {% trans "Medications" %}
+    </a>
+{% endif %}
+{% if perms.core.add_medication %}
+<a class="dropdown-item ps-5{% if request.path == '/medications/add/' %} active{% endif %}"
+   href="{% url 'core:medication-add' %}"><i class="icon-add" aria-hidden="true"></i>
+{% trans "Medication entry" %}
+</a>
+{% endif %}
+{% if perms.core.view_medicationschedule %}
+<a class="dropdown-item ps-5{% if request.path == '/medication-schedules/' %} active{% endif %}"
+   href="{% url 'core:medicationschedule-list' %}"><i class="icon-calendar" aria-hidden="true"></i>
+{% trans "Medication Schedules" %}
+</a>
+{% endif %}
 {% if perms.core.view_pumping %}
     <a class="dropdown-item{% if request.path == '/pumping/' %} active{% endif %}"
        href="{% url 'core:pumping-list' %}">

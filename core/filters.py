@@ -69,6 +69,18 @@ class TagFilter(django_filters.FilterSet):
         fields = {"name": ["contains"]}
 
 
+class MedicationFilter(TagFilter):
+    class Meta:
+        model = models.Medication
+        fields = ["child"]
+
+
+class MedicationScheduleFilter(django_filters.FilterSet):
+    class Meta:
+        model = models.MedicationSchedule
+        fields = ["child", "active"]
+
+
 class TemperatureFilter(TagFilter):
     class Meta:
         model = models.Temperature

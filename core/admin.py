@@ -204,6 +204,52 @@ class SleepAdmin(ImportExportMixin, ExportActionMixin, admin.ModelAdmin):
     resource_class = SleepImportExportResource
 
 
+class MedicationImportExportResource(ImportExportResourceBase):
+    class Meta:
+        model = models.Medication
+
+
+@admin.register(models.Medication)
+class MedicationAdmin(ImportExportMixin, ExportActionMixin, admin.ModelAdmin):
+    list_display = (
+        "child",
+        "name",
+        "amount",
+        "amount_unit",
+        "time",
+    )
+    list_filter = ("child", "tags")
+    search_fields = (
+        "child__first_name",
+        "child__last_name",
+        "name",
+    )
+    resource_class = MedicationImportExportResource
+
+
+class MedicationScheduleImportExportResource(ImportExportResourceBase):
+    class Meta:
+        model = models.MedicationSchedule
+
+
+@admin.register(models.MedicationSchedule)
+class MedicationScheduleAdmin(ImportExportMixin, ExportActionMixin, admin.ModelAdmin):
+    list_display = (
+        "child",
+        "name",
+        "frequency",
+        "schedule_time",
+        "active",
+    )
+    list_filter = ("child", "active", "frequency")
+    search_fields = (
+        "child__first_name",
+        "child__last_name",
+        "name",
+    )
+    resource_class = MedicationScheduleImportExportResource
+
+
 class TemperatureImportExportResource(ImportExportResourceBase):
     class Meta:
         model = models.Temperature

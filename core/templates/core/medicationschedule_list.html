@@ -1,0 +1,97 @@
+{% extends 'babybuddy/page.html' %}
+{% load i18n widget_tweaks %}
+{% block title %}
+    {% trans "Medication Schedules" %}
+{% endblock %}
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active" aria-current="page">{% trans "Medication Schedules" %}</li>
+{% endblock %}
+{% block content %}
+    <h1>
+        {% trans "Medication Schedules" %}
+        {% if perms.core.add_medicationschedule %}
+            <a href="{% url 'core:medicationschedule-add' %}"
+               class="btn btn-sm btn-success">
+                <i class="icon-medication" aria-hidden="true"></i> {% trans "Add Medication Schedule" %}
+            </a>
+        {% endif %}
+    </h1>
+    {% include 'babybuddy/filter.html' %}
+    <div class="table-responsive">
+        <table class="table table-instances table-borderless table-striped table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>{% trans "Actions" %}</th>
+                    {% if not unique_child %}
+                        <th>{% trans "Child" %}</th>
+                    {% endif %}
+                    <th>{% trans "Name" %}</th>
+                    <th>{% trans "Amount" %}</th>
+                    <th>{% trans "Frequency" %}</th>
+                    <th>{% trans "Time" %}</th>
+                    <th>{% trans "Active" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for schedule in object_list %}
+                    <tr>
+                        <td>
+                            <div class="btn-group btn-group-sm"
+                                 role="group"
+                                 aria-label="{% trans "Actions" %}">
+                                {% if perms.core.change_medicationschedule %}
+                                    <a href="{% url 'core:medicationschedule-update' schedule.id %}"
+                                       class="btn btn-primary">
+                                        <i class="icon-update" aria-hidden="true"></i>
+                                    </a>
+                                {% endif %}
+                                {% if perms.core.delete_medicationschedule %}
+                                    <a href="{% url 'core:medicationschedule-delete' schedule.id %}"
+                                       class="btn btn-danger">
+                                        <i class="icon-delete" aria-hidden="true"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% if not unique_child %}
+                            <td>
+                                <a href="{% url 'core:child' schedule.child.slug %}">{{ schedule.child }}</a>
+                            </td>
+                        {% endif %}
+                        <td>{{ schedule.name }}</td>
+                        <td>
+                            {% if schedule.amount %}{{ schedule.amount }} {{ schedule.amount_unit }}{% endif %}
+                        </td>
+                        <td>{{ schedule.get_frequency_display }}</td>
+                        <td>
+                            {% if schedule.frequency == "interval" %}
+                                {% blocktrans with hours=schedule.interval_hours %}Every {{ hours }}h{% endblocktrans %}
+                            {% elif schedule.schedule_time %}
+                                {{ schedule.schedule_time|time:"H:i" }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if schedule.active %}
+                                <i class="icon-true text-success" aria-hidden="true"></i>
+                            {% else %}
+                                <i class="icon-false text-danger" aria-hidden="true"></i>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if schedule.notes %}
+                        <tr class="{{ row_class }} row-details">
+                            <td colspan="7">
+                                <i class="icon-note me-2" aria-hidden="true"></i>{{ schedule.notes }}
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% empty %}
+                    <tr>
+                        <th colspan="7">{% trans "No medication schedules found." %}</th>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'babybuddy/paginator.html' %}
+{% endblock %}

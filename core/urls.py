@@ -123,6 +123,43 @@ urlpatterns = [
         views.HeadCircumferenceDelete.as_view(),
         name="head-circumference-delete",
     ),
+    path("medications/", views.MedicationList.as_view(), name="medication-list"),
+    path("medications/add/", views.MedicationAdd.as_view(), name="medication-add"),
+    path(
+        "medications/<int:pk>/",
+        views.MedicationUpdate.as_view(),
+        name="medication-update",
+    ),
+    path(
+        "medications/<int:pk>/delete/",
+        views.MedicationDelete.as_view(),
+        name="medication-delete",
+    ),
+    path(
+        "medication-schedules/",
+        views.MedicationScheduleList.as_view(),
+        name="medicationschedule-list",
+    ),
+    path(
+        "medication-schedules/add/",
+        views.MedicationScheduleAdd.as_view(),
+        name="medicationschedule-add",
+    ),
+    path(
+        "medication-schedules/<int:pk>/",
+        views.MedicationScheduleUpdate.as_view(),
+        name="medicationschedule-update",
+    ),
+    path(
+        "medication-schedules/<int:pk>/delete/",
+        views.MedicationScheduleDelete.as_view(),
+        name="medicationschedule-delete",
+    ),
+    path(
+        "medication-schedules/<int:pk>/give/",
+        views.MedicationGive.as_view(),
+        name="medication-give",
+    ),
     path("bmi/", views.BMIList.as_view(), name="bmi-list"),
     path("bmi/add/", views.BMIAdd.as_view(), name="bmi-add"),
     path("bmi/<int:pk>/", views.BMIUpdate.as_view(), name="bmi-update"),
