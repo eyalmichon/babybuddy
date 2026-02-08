@@ -714,6 +714,157 @@ class TummyTime(models.Model):
         validate_unique_period(TummyTime.objects.filter(child=self.child), self)
 
 
+class MedicationSchedule(models.Model):
+    model_name = "medicationschedule"
+
+    FREQUENCY_DAILY = "daily"
+    FREQUENCY_INTERVAL = "interval"
+    FREQUENCY_WEEKLY = "weekly"
+    FREQUENCY_CHOICES = [
+        (FREQUENCY_DAILY, _("Daily")),
+        (FREQUENCY_INTERVAL, _("Every X hours")),
+        (FREQUENCY_WEEKLY, _("Specific days of week")),
+    ]
+
+    DAY_FIELDS = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
+
+    child = models.ForeignKey(
+        "Child",
+        on_delete=models.CASCADE,
+        related_name="medication_schedules",
+        verbose_name=_("Child"),
+    )
+    name = models.CharField(max_length=255, verbose_name=_("Name"))
+    amount = models.FloatField(blank=True, null=True, verbose_name=_("Amount"))
+    amount_unit = models.CharField(
+        max_length=50, blank=True, verbose_name=_("Amount unit")
+    )
+
+    frequency = models.CharField(
+        max_length=20,
+        choices=FREQUENCY_CHOICES,
+        default=FREQUENCY_DAILY,
+        verbose_name=_("Frequency"),
+    )
+    schedule_time = models.TimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Time of day"),
+        help_text=_("For daily/weekly schedules"),
+    )
+    interval_hours = models.FloatField(
+        blank=True,
+        null=True,
+        verbose_name=_("Interval (hours)"),
+        help_text=_("For interval-based schedules (e.g., every 6 hours)"),
+    )
+
+    # Day-of-week fields for weekly frequency
+    monday = models.BooleanField(default=False, verbose_name=_("Monday"))
+    tuesday = models.BooleanField(default=False, verbose_name=_("Tuesday"))
+    wednesday = models.BooleanField(default=False, verbose_name=_("Wednesday"))
+    thursday = models.BooleanField(default=False, verbose_name=_("Thursday"))
+    friday = models.BooleanField(default=False, verbose_name=_("Friday"))
+    saturday = models.BooleanField(default=False, verbose_name=_("Saturday"))
+    sunday = models.BooleanField(default=False, verbose_name=_("Sunday"))
+
+    active = models.BooleanField(default=True, verbose_name=_("Active"))
+    notes = models.TextField(blank=True, null=True, verbose_name=_("Notes"))
+
+    objects = models.Manager()
+
+    class Meta:
+        default_permissions = ("view", "add", "change", "delete")
+        ordering = ["name"]
+        verbose_name = _("Medication Schedule")
+        verbose_name_plural = _("Medication Schedules")
+
+    def __str__(self):
+        return self.name
+
+    def get_scheduled_days(self):
+        """Return list of active weekday numbers (0=Monday, 6=Sunday)."""
+        return [i for i, day in enumerate(self.DAY_FIELDS) if getattr(self, day)]
+
+    def is_due_today(self):
+        """Return True if this schedule applies to today."""
+        if self.frequency == self.FREQUENCY_DAILY:
+            return True
+        if self.frequency == self.FREQUENCY_INTERVAL:
+            return True
+        if self.frequency == self.FREQUENCY_WEEKLY:
+            return timezone.localdate().weekday() in self.get_scheduled_days()
+        return False
+
+    def next_due_time(self, reference_time=None):
+        """
+        Return the next datetime this medication is due.
+        For daily/weekly: today at schedule_time.
+        For interval: reference_time + interval_hours (or now if no reference).
+        """
+        now = timezone.localtime()
+        if self.frequency == self.FREQUENCY_INTERVAL:
+            if reference_time and self.interval_hours:
+                return reference_time + datetime.timedelta(hours=self.interval_hours)
+            return now
+        if self.schedule_time:
+            return timezone.make_aware(
+                datetime.datetime.combine(now.date(), self.schedule_time),
+                timezone.get_current_timezone(),
+            )
+        return now
+
+
+class Medication(models.Model):
+    model_name = "medication"
+    child = models.ForeignKey(
+        "Child",
+        on_delete=models.CASCADE,
+        related_name="medication",
+        verbose_name=_("Child"),
+    )
+    medication_schedule = models.ForeignKey(
+        "MedicationSchedule",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="log_entries",
+        verbose_name=_("Schedule"),
+    )
+    time = models.DateTimeField(
+        blank=False, default=timezone.localtime, null=False, verbose_name=_("Time")
+    )
+    name = models.CharField(max_length=255, verbose_name=_("Name"))
+    amount = models.FloatField(blank=True, null=True, verbose_name=_("Amount"))
+    amount_unit = models.CharField(
+        max_length=50, blank=True, verbose_name=_("Amount unit")
+    )
+    notes = models.TextField(blank=True, null=True, verbose_name=_("Notes"))
+    tags = TaggableManager(blank=True, through=Tagged)
+
+    objects = models.Manager()
+
+    class Meta:
+        default_permissions = ("view", "add", "change", "delete")
+        ordering = ["-time"]
+        verbose_name = _("Medication")
+        verbose_name_plural = _("Medications")
+
+    def __str__(self):
+        return str(_("Medication"))
+
+    def clean(self):
+        validate_time(self.time, "time")
+
+
 class Weight(models.Model):
     model_name = "weight"
     child = models.ForeignKey(
