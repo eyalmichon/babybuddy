@@ -852,6 +852,65 @@ def card_tummytime_day(context, child, date=None):
     }
 
 
+def _medication_pending(child):
+    """
+    Build a list of pending medication schedule items whose next dose is
+    due today or is already overdue.
+
+    For every active schedule we find the most recent dose and compute the
+    next due time via ``MedicationSchedule.next_due_time()``.  For daily and
+    weekly schedules the model method uses a 12-hour buffer so that a late
+    dose given just after midnight is correctly attributed to the *previous*
+    day's schedule rather than suppressing the real next-day dose.
+
+    Interval schedules are always shown (with their computed next-due time)
+    regardless of date.
+
+    Shared by card_medication_last and medication_overdue_alert.
+    """
+    now = timezone.localtime()
+    today = now.date()
+    pending = []
+
+    for schedule in models.MedicationSchedule.objects.filter(child=child, active=True):
+        # Quick filter: skip weekly schedules with no days configured.
+        if schedule.frequency == models.MedicationSchedule.FREQUENCY_WEEKLY:
+            if not schedule.get_scheduled_days():
+                continue
+
+        last = (
+            models.Medication.objects.filter(medication_schedule=schedule, child=child)
+            .order_by("-time")
+            .first()
+        )
+
+        due = schedule.next_due_time(last.time if last else None)
+
+        if schedule.frequency == models.MedicationSchedule.FREQUENCY_INTERVAL:
+            # Interval schedules always show with their next due time.
+            # "has_specific_time" is true only when there is a previous dose
+            # to measure the interval from.  The very first dose is "due now".
+            has_specific_time = last is not None
+        else:
+            # Daily / weekly: only show if the next dose falls today or earlier.
+            if due.date() > today:
+                continue
+            has_specific_time = schedule.schedule_time is not None
+
+        pending.append(
+            {
+                "schedule": schedule,
+                "due_time": due,
+                "overdue": now > due,
+                "has_specific_time": has_specific_time,
+            }
+        )
+
+    # Sort: overdue first, then by due time.
+    pending.sort(key=lambda x: (not x["overdue"], x["due_time"]))
+    return pending
+
+
 @register.inclusion_tag("cards/medication_last.html", takes_context=True)
 def card_medication_last(context, child):
     """
@@ -867,54 +926,7 @@ def card_medication_last(context, child):
         .first()
     )
     empty = not instance
-
-    # Find all due (not yet given) schedules for today.
-    now = timezone.localtime()
-    today = now.date()
-    pending = []
-
-    for schedule in models.MedicationSchedule.objects.filter(child=child, active=True):
-        if not schedule.is_due_today():
-            continue
-
-        if schedule.frequency == models.MedicationSchedule.FREQUENCY_INTERVAL:
-            last = (
-                models.Medication.objects.filter(
-                    medication_schedule=schedule, child=child
-                )
-                .order_by("-time")
-                .first()
-            )
-            due = schedule.next_due_time(last.time if last else None)
-            # Only treat as having a specific time if there's a previous dose
-            # to measure the interval from.  First dose is always "due now".
-            has_specific_time = last is not None
-            # Interval schedules always show with next due time.
-            pending.append(
-                {
-                    "schedule": schedule,
-                    "due_time": due,
-                    "overdue": now > due,
-                    "has_specific_time": bool(has_specific_time),
-                }
-            )
-        else:
-            due = schedule.next_due_time()
-            given = models.Medication.objects.filter(
-                medication_schedule=schedule, child=child, time__date=today
-            ).exists()
-            if not given:
-                pending.append(
-                    {
-                        "schedule": schedule,
-                        "due_time": due,
-                        "overdue": now > due,
-                        "has_specific_time": schedule.schedule_time is not None,
-                    }
-                )
-
-    # Sort: overdue first, then by due time.
-    pending.sort(key=lambda x: (not x["overdue"], x["due_time"]))
+    pending = _medication_pending(child)
 
     return {
         "type": "medication",
@@ -922,4 +934,18 @@ def card_medication_last(context, child):
         "pending": pending,
         "empty": empty and len(pending) == 0,
         "hide_empty": _hide_empty(context),
+    }
+
+
+@register.inclusion_tag("cards/medication_overdue_alert.html")
+def medication_overdue_alert(child):
+    """
+    Alert banner for overdue medications, shown above dashboard cards.
+    :param child: an instance of the Child model.
+    :returns: a dictionary with overdue medication items.
+    """
+    pending = _medication_pending(child)
+    overdue = [item for item in pending if item["overdue"]]
+    return {
+        "overdue": overdue,
     }

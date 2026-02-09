@@ -11,6 +11,7 @@
     <li class="breadcrumb-item active" aria-current="page">{% trans "Dashboard" %}</li>
 {% endblock %}
 {% block content %}
+    {% medication_overdue_alert object %}
     <div id="dashboard-child"
          class="row"
          data-masonry='{"percentPosition": true }'>
