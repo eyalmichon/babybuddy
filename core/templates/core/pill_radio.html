@@ -8,4 +8,25 @@
             {% endfor %}
         {% endfor %}
     </div>
+    <script>
+        (function() {
+            var c = document.getElementById("{{ id }}");
+            if (!c) return;
+            var labels = c.querySelectorAll("label[for]");
+            for (var i = 0; i < labels.length; i++) {
+                (function(label) {
+                    label.addEventListener("click", function(e) {
+                        e.preventDefault();
+                        var radio = document.getElementById(label.getAttribute("for"));
+                        if (!radio) return;
+                        if (radio.checked) {
+                            radio.checked = false;
+                        } else {
+                            radio.checked = true;
+                        }
+                    });
+                })(labels[i]);
+            }
+        })();
+    </script>
 {% endwith %}
