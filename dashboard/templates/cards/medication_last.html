@@ -17,12 +17,7 @@
 {% endblock %}
 {% block content %}
     {% if medication %}
-        {{ medication.name }}
-        {% if medication.amount %}
-            ({{ medication.amount }}
-            {% if medication.amount_unit %}{{ medication.amount_unit }}{% endif %}
-            )
-        {% endif %}
+        {# djlint:off #}{{ medication.name }}{% if medication.amount %} ({{ medication.amount }}{% if medication.amount_unit %} {{ medication.amount_unit }}{% endif %}){% endif %}{# djlint:on #}
     {% endif %}
 {% endblock %}
 {% block listgroup %}
