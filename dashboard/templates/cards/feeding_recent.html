@@ -12,14 +12,20 @@
                 {% for feeding in feedings %}
                     <div class="carousel-item{% if forloop.counter == 1 %} active{% endif %}">
                         <div class="last-feeding-method text-center">
-                            {% if feeding.total %}
+                            {% if feeding.has_amount %}
                                 {{ feeding.total|floatformat }}
+                            {% elif feeding.count > 0 %}
+                                {% blocktrans trimmed count counter=feeding.count %}
+                                    {{ counter }} feeding
+                                {% plural %}
+                                    {{ counter }} feedings
+                                {% endblocktrans %}
                             {% else %}
                                 {% trans "None" %}
                             {% endif %}
                         </div>
                         <div class="text-center small">
-                            {% if feeding.count > 0 %}
+                            {% if feeding.has_amount and feeding.count > 0 %}
                                 {% blocktrans trimmed count counter=feeding.count %}
                                     {{ counter }} feeding
                                 {% plural %}
