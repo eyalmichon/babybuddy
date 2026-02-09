@@ -31,12 +31,21 @@
                         {% if item.overdue %}
                             <small class="text-warning">
                                 <i class="icon-clock" aria-hidden="true"></i>
-                                {% trans "overdue" %} ({{ item.due_time|time:"H:i" }})
+                                {% if item.has_specific_time %}
+                                    {% trans "overdue" %} ({{ item.due_time|time:"H:i" }})
+                                {% else %}
+                                    {% trans "overdue" %}
+                                {% endif %}
+                            </small>
+                        {% elif item.has_specific_time %}
+                            <small class="text-muted">
+                                <i class="icon-clock" aria-hidden="true"></i>
+                                {% trans "due at" %} {{ item.due_time|time:"H:i" }}
                             </small>
                         {% else %}
                             <small class="text-muted">
                                 <i class="icon-clock" aria-hidden="true"></i>
-                                {% trans "due at" %} {{ item.due_time|time:"H:i" }}
+                                {% trans "due today" %}
                             </small>
                         {% endif %}
                     </div>
