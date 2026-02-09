@@ -717,6 +717,17 @@ class TummyTime(models.Model):
 class MedicationSchedule(models.Model):
     model_name = "medicationschedule"
 
+    UNIT_CHOICES = [
+        ("ml", _("ml")),
+        ("mg", _("mg")),
+        ("drops", _("drops")),
+        ("IU", _("IU")),
+        ("oz", _("oz")),
+        ("tbsp", _("tbsp")),
+        ("tsp", _("tsp")),
+        ("puffs", _("puffs")),
+    ]
+
     FREQUENCY_DAILY = "daily"
     FREQUENCY_INTERVAL = "interval"
     FREQUENCY_WEEKLY = "weekly"
@@ -745,7 +756,7 @@ class MedicationSchedule(models.Model):
     name = models.CharField(max_length=255, verbose_name=_("Name"))
     amount = models.FloatField(blank=True, null=True, verbose_name=_("Amount"))
     amount_unit = models.CharField(
-        max_length=50, blank=True, verbose_name=_("Amount unit")
+        max_length=50, blank=True, choices=UNIT_CHOICES, verbose_name=_("Amount unit")
     )
 
     frequency = models.CharField(
@@ -845,7 +856,10 @@ class Medication(models.Model):
     name = models.CharField(max_length=255, verbose_name=_("Name"))
     amount = models.FloatField(blank=True, null=True, verbose_name=_("Amount"))
     amount_unit = models.CharField(
-        max_length=50, blank=True, verbose_name=_("Amount unit")
+        max_length=50,
+        blank=True,
+        choices=MedicationSchedule.UNIT_CHOICES,
+        verbose_name=_("Amount unit"),
     )
     notes = models.TextField(blank=True, null=True, verbose_name=_("Notes"))
     tags = TaggableManager(blank=True, through=Tagged)
