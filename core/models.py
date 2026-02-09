@@ -818,20 +818,94 @@ class MedicationSchedule(models.Model):
     def next_due_time(self, reference_time=None):
         """
         Return the next datetime this medication is due.
-        For daily/weekly: today at schedule_time.
+
         For interval: reference_time + interval_hours (or now if no reference).
+        For daily/weekly with a reference_time and a schedule_time: find the
+        next scheduled occurrence that is at least 12 hours after the
+        reference.  The 12-hour buffer (half the daily period) means a late
+        dose given just after midnight is correctly attributed to the previous
+        day's schedule rather than suppressing the real next-day dose.
+        For daily/weekly with a reference_time but no schedule_time: next
+        calendar day (or next scheduled weekday for weekly).
+        For daily/weekly without a reference_time: first dose -- today at
+        schedule_time or now.
         """
         now = timezone.localtime()
+        tz = timezone.get_current_timezone()
+
         if self.frequency == self.FREQUENCY_INTERVAL:
             if reference_time and self.interval_hours:
                 return reference_time + datetime.timedelta(hours=self.interval_hours)
             return now
+
+        # --- Daily / Weekly logic ---
+        if reference_time:
+            if self.schedule_time:
+                # 12-hour buffer: the next occurrence must be at least half a
+                # day after the last dose.
+                earliest = reference_time + datetime.timedelta(hours=12)
+                if self.frequency == self.FREQUENCY_WEEKLY:
+                    return self._next_weekly_occurrence(earliest, tz)
+                # Daily with specific time.
+                candidate = timezone.make_aware(
+                    datetime.datetime.combine(earliest.date(), self.schedule_time),
+                    tz,
+                )
+                if candidate < earliest:
+                    candidate += datetime.timedelta(days=1)
+                return candidate
+            else:
+                # No specific time -- "once per day / per scheduled weekday".
+                if self.frequency == self.FREQUENCY_WEEKLY:
+                    next_day_start = timezone.make_aware(
+                        datetime.datetime.combine(
+                            reference_time.date() + datetime.timedelta(days=1),
+                            datetime.time.min,
+                        ),
+                        tz,
+                    )
+                    return self._next_weekly_occurrence(next_day_start, tz)
+                # Daily: next calendar day.
+                next_day = reference_time.date() + datetime.timedelta(days=1)
+                return timezone.make_aware(
+                    datetime.datetime.combine(next_day, datetime.time.min), tz
+                )
+
+        # No reference_time – first dose or fallback.
+        if self.frequency == self.FREQUENCY_WEEKLY:
+            return self._next_weekly_occurrence(now, tz)
         if self.schedule_time:
             return timezone.make_aware(
-                datetime.datetime.combine(now.date(), self.schedule_time),
-                timezone.get_current_timezone(),
+                datetime.datetime.combine(now.date(), self.schedule_time), tz
             )
         return now
+
+    def _next_weekly_occurrence(self, earliest, tz):
+        """
+        Return the first scheduled weekday occurrence on or after *earliest*.
+        """
+        scheduled_days = self.get_scheduled_days()
+        if not scheduled_days:
+            return earliest
+
+        # Search up to 8 days forward to find the next matching weekday.
+        for offset in range(8):
+            candidate_date = earliest.date() + datetime.timedelta(days=offset)
+            if candidate_date.weekday() in scheduled_days:
+                if self.schedule_time:
+                    candidate = timezone.make_aware(
+                        datetime.datetime.combine(candidate_date, self.schedule_time),
+                        tz,
+                    )
+                else:
+                    candidate = timezone.make_aware(
+                        datetime.datetime.combine(candidate_date, datetime.time.min),
+                        tz,
+                    )
+                if candidate >= earliest:
+                    return candidate
+        # Fallback (should never happen with valid data).
+        return earliest
 
 
 class Medication(models.Model):

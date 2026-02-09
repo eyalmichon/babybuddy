@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import datetime
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
@@ -465,3 +467,178 @@ class TemplateTagsTestCase(TestCase):
         data = cards.card_medication_last(self.context, self.child)
         self.assertTrue(data["empty"])
         self.assertEqual(len(data["pending"]), 0)
+
+    def test_medication_midnight_boundary_daily(self):
+        """A daily 23:59 dose given at 00:01 the next day should still
+        show as pending for that day's 23:59 occurrence."""
+        schedule = models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="Late Night Med",
+            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            schedule_time=datetime.time(23, 59),
+            active=True,
+        )
+        tz = timezone.get_current_timezone()
+        # Simulate: dose given at 00:01 today (meant for yesterday's 23:59).
+        today = timezone.localdate()
+        dose_time = timezone.make_aware(
+            datetime.datetime.combine(today, datetime.time(0, 1)), tz
+        )
+        models.Medication.objects.create(
+            child=self.child,
+            medication_schedule=schedule,
+            name="Late Night Med",
+            time=dose_time,
+        )
+        # At 10:00 the same day, the 23:59 dose should still be pending.
+        fake_now = timezone.make_aware(
+            datetime.datetime.combine(today, datetime.time(10, 0)), tz
+        )
+        with mock.patch("dashboard.templatetags.cards.timezone") as m_tz:
+            m_tz.localtime.return_value = fake_now
+            pending = cards._medication_pending(self.child)
+        self.assertEqual(len(pending), 1)
+        self.assertEqual(pending[0]["schedule"], schedule)
+        self.assertFalse(pending[0]["overdue"])
+
+    def test_medication_normal_daily_dose_clears(self):
+        """A daily 08:00 dose given at 08:05 should NOT show as pending
+        for the rest of the day."""
+        schedule = models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="Morning Med",
+            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            schedule_time=datetime.time(8, 0),
+            active=True,
+        )
+        tz = timezone.get_current_timezone()
+        today = timezone.localdate()
+        dose_time = timezone.make_aware(
+            datetime.datetime.combine(today, datetime.time(8, 5)), tz
+        )
+        models.Medication.objects.create(
+            child=self.child,
+            medication_schedule=schedule,
+            name="Morning Med",
+            time=dose_time,
+        )
+        # At 09:00 the same day, it should not be pending.
+        fake_now = timezone.make_aware(
+            datetime.datetime.combine(today, datetime.time(9, 0)), tz
+        )
+        with mock.patch("dashboard.templatetags.cards.timezone") as m_tz:
+            m_tz.localtime.return_value = fake_now
+            pending = cards._medication_pending(self.child)
+        self.assertEqual(len(pending), 0)
+
+    def test_medication_weekly_late_dose(self):
+        """A Friday 23:00 weekly dose given at Saturday 00:01 should not
+        suppress the next scheduled weekday occurrence."""
+        # Schedule: every Friday at 23:00.
+        schedule = models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="Weekly Med",
+            frequency=models.MedicationSchedule.FREQUENCY_WEEKLY,
+            schedule_time=datetime.time(23, 0),
+            friday=True,
+            active=True,
+        )
+        tz = timezone.get_current_timezone()
+        # Find the next Friday from today and set the dose on the following Saturday 00:01.
+        today = timezone.localdate()
+        days_until_friday = (4 - today.weekday()) % 7
+        friday = today + datetime.timedelta(days=days_until_friday)
+        saturday = friday + datetime.timedelta(days=1)
+        dose_time = timezone.make_aware(
+            datetime.datetime.combine(saturday, datetime.time(0, 1)), tz
+        )
+        models.Medication.objects.create(
+            child=self.child,
+            medication_schedule=schedule,
+            name="Weekly Med",
+            time=dose_time,
+        )
+        # On the following Friday, the dose should show as pending again.
+        next_friday = friday + datetime.timedelta(weeks=1)
+        fake_now = timezone.make_aware(
+            datetime.datetime.combine(next_friday, datetime.time(10, 0)), tz
+        )
+        with mock.patch("dashboard.templatetags.cards.timezone") as m_tz:
+            m_tz.localtime.return_value = fake_now
+            pending = cards._medication_pending(self.child)
+        self.assertEqual(len(pending), 1)
+        self.assertEqual(pending[0]["schedule"], schedule)
+
+    def test_medication_first_dose_shows_pending(self):
+        """A schedule with no previous doses should show as pending."""
+        schedule = models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="New Med",
+            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            schedule_time=datetime.time(9, 0),
+            active=True,
+        )
+        data = cards.card_medication_last(self.context, self.child)
+        self.assertEqual(len(data["pending"]), 1)
+        self.assertEqual(data["pending"][0]["schedule"], schedule)
+
+    def test_medication_no_schedule_time_daily(self):
+        """A daily schedule without a specific time: given today, it should
+        not show as pending until tomorrow."""
+        schedule = models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="Anytime Med",
+            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            schedule_time=None,
+            active=True,
+        )
+        tz = timezone.get_current_timezone()
+        today = timezone.localdate()
+        dose_time = timezone.make_aware(
+            datetime.datetime.combine(today, datetime.time(14, 0)), tz
+        )
+        models.Medication.objects.create(
+            child=self.child,
+            medication_schedule=schedule,
+            name="Anytime Med",
+            time=dose_time,
+        )
+        # Later the same day it should not be pending.
+        fake_now = timezone.make_aware(
+            datetime.datetime.combine(today, datetime.time(18, 0)), tz
+        )
+        with mock.patch("dashboard.templatetags.cards.timezone") as m_tz:
+            m_tz.localtime.return_value = fake_now
+            pending = cards._medication_pending(self.child)
+        self.assertEqual(len(pending), 0)
+
+    def test_medication_no_schedule_time_next_day(self):
+        """A daily schedule without a specific time: given yesterday, it should
+        show as pending today."""
+        schedule = models.MedicationSchedule.objects.create(
+            child=self.child,
+            name="Anytime Med",
+            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            schedule_time=None,
+            active=True,
+        )
+        tz = timezone.get_current_timezone()
+        today = timezone.localdate()
+        yesterday = today - datetime.timedelta(days=1)
+        dose_time = timezone.make_aware(
+            datetime.datetime.combine(yesterday, datetime.time(15, 0)), tz
+        )
+        models.Medication.objects.create(
+            child=self.child,
+            medication_schedule=schedule,
+            name="Anytime Med",
+            time=dose_time,
+        )
+        fake_now = timezone.make_aware(
+            datetime.datetime.combine(today, datetime.time(8, 0)), tz
+        )
+        with mock.patch("dashboard.templatetags.cards.timezone") as m_tz:
+            m_tz.localtime.return_value = fake_now
+            pending = cards._medication_pending(self.child)
+        self.assertEqual(len(pending), 1)
+        self.assertEqual(pending[0]["schedule"], schedule)
