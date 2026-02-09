@@ -8,7 +8,7 @@
 [data-bs-theme=light] {
   --bs-blue: #0d6efd;
   --bs-indigo: #6610f2;
-  --bs-purple: #6f42c1;
+  --bs-purple: #7c4dff;
   --bs-pink: #d63384;
   --bs-red: #dc3545;
   --bs-orange: #fd7e14;
@@ -12168,6 +12168,17 @@ textarea.form-control-lg {
   padding: 0;
 }
 
+.card-medication {
+  border-color: #7c4dff;
+}
+.card-medication .card-header, .card-medication .card-header a {
+  background-color: #7c4dff;
+  color: #f8f9fa;
+}
+.card-medication .card-body {
+  color: #7c4dff;
+}
+
 .card-tummytime {
   border-color: #239556;
 }
@@ -12189,8 +12200,8 @@ textarea.form-control-lg {
 
 @font-face {
   font-family: "babybuddy";
-  src: url("../font/babybuddy.bd569f3378ff.eot?67957580");
-  src: url("../font/babybuddy.bd569f3378ff.eot?67957580#iefix") format("embedded-opentype"), url("../font/babybuddy.282820350933.woff2?67957580") format("woff2"), url("../font/babybuddy.3a5be3d1bb70.woff?67957580") format("woff"), url("../font/babybuddy.fe641467f315.ttf?67957580") format("truetype"), url("../font/babybuddy.d4485b78335c.svg?67957580#babybuddy") format("svg");
+  src: url("../font/babybuddy.af2bce7da01a.eot?25901289");
+  src: url("../font/babybuddy.af2bce7da01a.eot?25901289#iefix") format("embedded-opentype"), url("../font/babybuddy.a2aebc9eb88e.woff2?25901289") format("woff2"), url("../font/babybuddy.18fc15a250ac.woff?25901289") format("woff"), url("../font/babybuddy.70085508eeeb.ttf?25901289") format("truetype"), url("../font/babybuddy.a9ba7a940cd7.svg?25901289#babybuddy") format("svg");
   font-weight: normal;
   font-style: normal;
 }
@@ -12200,7 +12211,7 @@ textarea.form-control-lg {
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   @font-face {
     font-family: 'babybuddy';
-    src: url("../font/babybuddy.d4485b78335c.svg?67957580#babybuddy") format('svg');
+    src: url("../font/babybuddy.a9ba7a940cd7.svg?25901289#babybuddy") format('svg');
   }
 }
 */
@@ -12307,6 +12318,9 @@ textarea.form-control-lg {
 .icon-dashboard:before {
   content: "\f0e4";
 } /* '' */
+.icon-medication:before {
+  content: "\f0fa";
+} /* '' */
 .icon-angle-double-left:before {
   content: "\f100";
 } /* '' */
