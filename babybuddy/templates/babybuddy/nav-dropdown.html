@@ -82,6 +82,12 @@
             {% trans "Tummy Time" %}
         </a>
     {% endif %}
+    {% if perms.core.add_medication %}
+        <a class="dropdown-item p-2" href="{% url 'core:medication-add' %}">
+            <i class="icon-medication" aria-hidden="true"></i>
+            {% trans "Medication" %}
+        </a>
+    {% endif %}
 </div>
 </div>
 </div>
