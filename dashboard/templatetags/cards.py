@@ -921,7 +921,7 @@ def card_medication_last(context, child):
     """
     instance = (
         models.Medication.objects.filter(child=child)
-        .filter(**_filter_data_age(context))
+        .filter(**_filter_data_age(context, "time"))
         .order_by("-time")
         .first()
     )
