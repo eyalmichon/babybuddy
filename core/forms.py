@@ -2,6 +2,7 @@
 from django import forms
 from django.forms import widgets
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -97,13 +98,13 @@ class CoreModelForm(forms.ModelForm):
         super(CoreModelForm, self).__init__(*args, **kwargs)
 
     def save(self, commit=True):
-        # If `timer_id` is present, stop the Timer.
         instance = super(CoreModelForm, self).save(commit=False)
-        if self.timer_id:
-            timer = models.Timer.objects.get(id=self.timer_id)
-            timer.stop()
         if commit:
-            instance.save()
+            with transaction.atomic():
+                instance.save()
+                if self.timer_id:
+                    timer = models.Timer.objects.get(id=self.timer_id)
+                    timer.stop()
             self.save_m2m()
         return instance
 
@@ -175,7 +176,11 @@ class BottleFeedingForm(CoreModelForm, TaggableModelForm):
         instance.method = "bottle"
         instance.end = instance.start
         if commit:
-            instance.save()
+            with transaction.atomic():
+                instance.save()
+                if self.timer_id:
+                    timer = models.Timer.objects.get(id=self.timer_id)
+                    timer.stop()
             self.save_m2m()
         return instance
 

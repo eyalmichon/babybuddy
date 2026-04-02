@@ -4,6 +4,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.utils import timezone
 
 from taggit.serializers import TagListSerializerField, TaggitSerializer
@@ -70,18 +71,17 @@ class CoreModelWithDurationSerializer(CoreModelSerializer):
         # Check for a special "timer" data argument that can be used in place
         # of "start" and "end" fields as well as "child" if it is set on the
         # Timer entry.
-        timer = None
+        self._timer = None
         if "timer" in attrs:
             # Remove the "timer" attribute (super validation would fail as it
             # is not a true field on the model).
-            timer = attrs["timer"]
-            attrs.pop("timer")
+            self._timer = attrs.pop("timer")
 
-            if timer.child:
-                attrs["child"] = timer.child
+            if self._timer.child:
+                attrs["child"] = self._timer.child
 
             # Overwrites values provided directly!
-            attrs["start"] = timer.start
+            attrs["start"] = self._timer.start
             attrs["end"] = timezone.now()
 
         # The "child", "start", and "end" field should all be set at this
@@ -95,13 +95,21 @@ class CoreModelWithDurationSerializer(CoreModelSerializer):
             if len(errors) > 0:
                 raise ValidationError(errors)
 
-        attrs = super().validate(attrs)
+        return super().validate(attrs)
 
-        # Only actually stop the timer if all validation passed.
-        if timer:
-            timer.stop()
+    def create(self, validated_data):
+        with transaction.atomic():
+            instance = super().create(validated_data)
+            if self._timer:
+                self._timer.stop()
+        return instance
 
-        return attrs
+    def update(self, instance, validated_data):
+        with transaction.atomic():
+            instance = super().update(instance, validated_data)
+            if self._timer:
+                self._timer.stop()
+        return instance
 
 
 class TaggableSerializer(TaggitSerializer, serializers.HyperlinkedModelSerializer):
