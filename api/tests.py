@@ -1297,6 +1297,49 @@ class TestHADiscoveryView(APITestCase):
         self.assertEqual(feeding["fields"]["amount"]["order"], 30)
         self.assertEqual(feeding["fields"]["notes"]["order"], 90)
 
+    def test_field_default_hints(self):
+        """Date fields should default to 'today', datetime fields to 'now'."""
+        response = self.client.get(self.endpoint)
+        services = response.data["services"]
+
+        expected_defaults = {
+            "add_child": {"birth_date": "today"},
+            "add_bmi": {"date": "today"},
+            "add_head_circumference": {"date": "today"},
+            "add_height": {"date": "today"},
+            "add_weight": {"date": "today"},
+            "add_diaper_change": {"time": "now"},
+            "add_note": {"time": "now"},
+            "add_temperature": {"time": "now"},
+            "add_medication": {"time": "now"},
+            "start_timer": {"start": "now"},
+        }
+
+        for svc_key, field_defaults in expected_defaults.items():
+            svc = next(s for s in services if s["key"] == svc_key)
+            for field_key, expected_val in field_defaults.items():
+                self.assertEqual(
+                    svc["fields"][field_key].get("default"),
+                    expected_val,
+                    f"{svc_key}.{field_key} should default to '{expected_val}'",
+                )
+
+        no_default_checks = [
+            ("add_child", "first_name"),
+            ("add_feeding", "amount"),
+            ("add_feeding", "type"),
+            ("add_bmi", "bmi"),
+            ("delete_last_entry", "entity_id"),
+            ("give_medication", "schedule_id"),
+        ]
+        for svc_key, field_key in no_default_checks:
+            svc = next(s for s in services if s["key"] == svc_key)
+            self.assertNotIn(
+                "default",
+                svc["fields"][field_key],
+                f"{svc_key}.{field_key} should NOT have a default",
+            )
+
     def test_requires_auth(self):
         self.client.logout()
         response = self.client.get(self.endpoint)

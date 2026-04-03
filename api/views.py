@@ -553,6 +553,7 @@ class HADiscoveryView(views.APIView):
                 "date": {
                     "type": "date",
                     "required": False,
+                    "default": "today",
                     "name": "Date",
                     "description": "Date of measurement",
                     "order": 20,
@@ -570,6 +571,7 @@ class HADiscoveryView(views.APIView):
                 "time": {
                     "type": "datetime",
                     "required": False,
+                    "default": "now",
                     "name": "Time",
                     "description": "Date and time of the diaper change",
                     "order": 10,
@@ -669,6 +671,7 @@ class HADiscoveryView(views.APIView):
                 "date": {
                     "type": "date",
                     "required": False,
+                    "default": "today",
                     "name": "Date",
                     "description": "Date of measurement",
                     "order": 20,
@@ -694,6 +697,7 @@ class HADiscoveryView(views.APIView):
                 "date": {
                     "type": "date",
                     "required": False,
+                    "default": "today",
                     "name": "Date",
                     "description": "Date of measurement",
                     "order": 20,
@@ -727,6 +731,7 @@ class HADiscoveryView(views.APIView):
                 "time": {
                     "type": "datetime",
                     "required": False,
+                    "default": "now",
                     "name": "Time",
                     "description": "Date and time of the note",
                     "order": 20,
@@ -810,6 +815,7 @@ class HADiscoveryView(views.APIView):
                 "time": {
                     "type": "datetime",
                     "required": False,
+                    "default": "now",
                     "name": "Time",
                     "description": "Date and time of the reading",
                     "order": 20,
@@ -853,6 +859,7 @@ class HADiscoveryView(views.APIView):
                 "date": {
                     "type": "date",
                     "required": False,
+                    "default": "today",
                     "name": "Date",
                     "description": "Date of measurement",
                     "order": 20,
@@ -893,6 +900,7 @@ class HADiscoveryView(views.APIView):
                 "time": {
                     "type": "datetime",
                     "required": False,
+                    "default": "now",
                     "name": "Time",
                     "description": "Date and time the medication was given",
                     "order": 40,
@@ -989,6 +997,7 @@ class HADiscoveryView(views.APIView):
                 "start": {
                     "type": "datetime",
                     "required": False,
+                    "default": "now",
                     "name": "Start Time",
                     "description": "Timer start time (defaults to now)",
                     "order": 10,
