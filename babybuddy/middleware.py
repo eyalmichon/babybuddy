@@ -86,6 +86,7 @@ class ForcePasswordChangeMiddleware:
             and request.user.settings.force_password_change
             and request.path not in self.ALLOWED_PATHS
             and not request.path.startswith("/static/")
+            and not request.path.startswith("/api/")
         ):
             from django.urls import reverse
 

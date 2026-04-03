@@ -35,6 +35,9 @@ def _on_zc_request_finished(sender, **kwargs):
     the master, picking up the new settings cleanly.  For runserver
     (single process), stop + start directly.
     """
+    if not BabyBuddyConfig._is_serving():
+        return
+
     from django.core.cache import cache
 
     if not cache.get(_ZC_DIRTY_CACHE_KEY):
