@@ -295,6 +295,7 @@ _END_FIELD = {
     "name": "End Time",
     "description": "End time of the activity",
     "order": 3,
+    "hidden_when_group": "timer_or_start",
 }
 
 _NOTES_FIELD = {

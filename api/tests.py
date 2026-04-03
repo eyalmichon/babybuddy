@@ -1395,9 +1395,11 @@ class TestHADiscoveryView(APITestCase):
             self.assertEqual(end["type"], "datetime")
             self.assertNotIn("default", end)
             self.assertNotIn("exclusion_group", end)
+            self.assertEqual(end["hidden_when_group"], "timer_or_start")
 
         bmi = next(s for s in services if s["key"] == "add_bmi")
         self.assertNotIn("timer", bmi["fields"])
+        self.assertNotIn("hidden_when_group", bmi["fields"]["date"])
 
     def test_structural_notes_and_tags(self):
         response = self.client.get(self.endpoint)
