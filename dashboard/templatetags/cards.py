@@ -9,6 +9,7 @@ from django.utils.translation import gettext as _
 import collections
 
 from core import models
+from core.choices import FeedingMethod, MedicationFrequency
 
 register = template.Library()
 
@@ -132,7 +133,13 @@ def card_breastfeeding(context, child, date=None):
         models.Feeding.objects.filter(child=child)
         .filter(start__gt=min_date)
         .filter(start__lt=max_date)
-        .filter(method__in=("left breast", "right breast", "both breasts"))
+        .filter(
+            method__in=(
+                FeedingMethod.LEFT_BREAST,
+                FeedingMethod.RIGHT_BREAST,
+                FeedingMethod.BOTH_BREASTS,
+            )
+        )
         .order_by("-start")
     )
 
@@ -152,9 +159,15 @@ def card_breastfeeding(context, child, date=None):
         left_count = 0
         right_count = 0
         for instance in day_instances:
-            if instance.method in ("left breast", "both breasts"):
+            if instance.method in (
+                FeedingMethod.LEFT_BREAST,
+                FeedingMethod.BOTH_BREASTS,
+            ):
                 left_count += 1
-            if instance.method in ("right breast", "both breasts"):
+            if instance.method in (
+                FeedingMethod.RIGHT_BREAST,
+                FeedingMethod.BOTH_BREASTS,
+            ):
                 right_count += 1
 
         stats[key] = {
@@ -873,7 +886,7 @@ def _medication_pending(child):
 
     for schedule in models.MedicationSchedule.objects.filter(child=child, active=True):
         # Quick filter: skip weekly schedules with no days configured.
-        if schedule.frequency == models.MedicationSchedule.FREQUENCY_WEEKLY:
+        if schedule.frequency == MedicationFrequency.WEEKLY:
             if not schedule.get_scheduled_days():
                 continue
 
@@ -885,7 +898,7 @@ def _medication_pending(child):
 
         due = schedule.next_due_time(last.time if last else None)
 
-        if schedule.frequency == models.MedicationSchedule.FREQUENCY_INTERVAL:
+        if schedule.frequency == MedicationFrequency.INTERVAL:
             # Interval schedules always show with their next due time.
             # "has_specific_time" is true only when there is a previous dose
             # to measure the interval from.  The very first dose is "due now".

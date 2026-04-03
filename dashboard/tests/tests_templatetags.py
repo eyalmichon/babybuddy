@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from babybuddy.models import Settings
 from core import models
+from core.choices import MedicationFrequency
 from dashboard.templatetags import cards
 
 from unittest import mock
@@ -389,7 +390,7 @@ class TemplateTagsTestCase(TestCase):
         schedule = models.MedicationSchedule.objects.create(
             child=self.child,
             name="Vitamin D",
-            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            frequency=MedicationFrequency.DAILY,
             schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
             active=True,
         )
@@ -402,14 +403,14 @@ class TemplateTagsTestCase(TestCase):
         models.MedicationSchedule.objects.create(
             child=self.child,
             name="Vitamin D",
-            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            frequency=MedicationFrequency.DAILY,
             schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
             active=True,
         )
         models.MedicationSchedule.objects.create(
             child=self.child,
             name="Ibuprofen",
-            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            frequency=MedicationFrequency.DAILY,
             schedule_time=timezone.datetime.strptime("08:00", "%H:%M").time(),
             active=True,
         )
@@ -420,7 +421,7 @@ class TemplateTagsTestCase(TestCase):
         schedule = models.MedicationSchedule.objects.create(
             child=self.child,
             name="Vitamin D",
-            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            frequency=MedicationFrequency.DAILY,
             schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
             active=True,
         )
@@ -439,7 +440,7 @@ class TemplateTagsTestCase(TestCase):
         schedule = models.MedicationSchedule.objects.create(
             child=self.child,
             name="Ibuprofen",
-            frequency=models.MedicationSchedule.FREQUENCY_INTERVAL,
+            frequency=MedicationFrequency.INTERVAL,
             interval_hours=6,
             active=True,
         )
@@ -460,7 +461,7 @@ class TemplateTagsTestCase(TestCase):
         models.MedicationSchedule.objects.create(
             child=self.child,
             name="Inactive Med",
-            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            frequency=MedicationFrequency.DAILY,
             schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
             active=False,
         )
@@ -474,7 +475,7 @@ class TemplateTagsTestCase(TestCase):
         schedule = models.MedicationSchedule.objects.create(
             child=self.child,
             name="Late Night Med",
-            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            frequency=MedicationFrequency.DAILY,
             schedule_time=datetime.time(23, 59),
             active=True,
         )
@@ -507,7 +508,7 @@ class TemplateTagsTestCase(TestCase):
         schedule = models.MedicationSchedule.objects.create(
             child=self.child,
             name="Morning Med",
-            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            frequency=MedicationFrequency.DAILY,
             schedule_time=datetime.time(8, 0),
             active=True,
         )
@@ -538,7 +539,7 @@ class TemplateTagsTestCase(TestCase):
         schedule = models.MedicationSchedule.objects.create(
             child=self.child,
             name="Weekly Med",
-            frequency=models.MedicationSchedule.FREQUENCY_WEEKLY,
+            frequency=MedicationFrequency.WEEKLY,
             schedule_time=datetime.time(23, 0),
             friday=True,
             active=True,
@@ -574,7 +575,7 @@ class TemplateTagsTestCase(TestCase):
         schedule = models.MedicationSchedule.objects.create(
             child=self.child,
             name="New Med",
-            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            frequency=MedicationFrequency.DAILY,
             schedule_time=datetime.time(9, 0),
             active=True,
         )
@@ -588,7 +589,7 @@ class TemplateTagsTestCase(TestCase):
         schedule = models.MedicationSchedule.objects.create(
             child=self.child,
             name="Anytime Med",
-            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            frequency=MedicationFrequency.DAILY,
             schedule_time=None,
             active=True,
         )
@@ -618,7 +619,7 @@ class TemplateTagsTestCase(TestCase):
         schedule = models.MedicationSchedule.objects.create(
             child=self.child,
             name="Anytime Med",
-            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            frequency=MedicationFrequency.DAILY,
             schedule_time=None,
             active=True,
         )

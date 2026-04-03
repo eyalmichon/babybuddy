@@ -10,6 +10,7 @@ from taggit.forms import TagField
 
 from babybuddy.widgets import DateInput, DateTimeInput, TimeInput
 from core import models
+from core.choices import FeedingMethod, MedicationFrequency
 from core.models import Timer
 from core.widgets import TagsEditor, ChildRadioSelect, PillRadioSelect
 
@@ -63,7 +64,10 @@ def set_initial_values(kwargs, form_type):
         if last_feeding:
             last_method = last_feeding.method
             last_feed_args = {"type": last_feeding.type}
-            if last_method not in ["left breast", "right breast"]:
+            if last_method not in [
+                FeedingMethod.LEFT_BREAST,
+                FeedingMethod.RIGHT_BREAST,
+            ]:
                 last_feed_args["method"] = last_method
             kwargs["initial"].update(last_feed_args)
 
@@ -173,7 +177,7 @@ class BottleFeedingForm(CoreModelForm, TaggableModelForm):
 
     def save(self, commit=True):
         instance = super(BottleFeedingForm, self).save(commit=False)
-        instance.method = "bottle"
+        instance.method = FeedingMethod.BOTTLE
         instance.end = instance.start
         if commit:
             with transaction.atomic():
@@ -482,16 +486,16 @@ class MedicationScheduleForm(CoreModelForm):
         freq = cleaned.get("frequency")
 
         # Clear day-of-week fields when not using weekly frequency.
-        if freq != models.MedicationSchedule.FREQUENCY_WEEKLY:
+        if freq != MedicationFrequency.WEEKLY:
             for day in models.MedicationSchedule.DAY_FIELDS:
                 cleaned[day] = False
 
         # Clear interval_hours when not using interval frequency.
-        if freq != models.MedicationSchedule.FREQUENCY_INTERVAL:
+        if freq != MedicationFrequency.INTERVAL:
             cleaned["interval_hours"] = None
 
         # Clear schedule_time when using interval frequency.
-        if freq == models.MedicationSchedule.FREQUENCY_INTERVAL:
+        if freq == MedicationFrequency.INTERVAL:
             cleaned["schedule_time"] = None
 
         return cleaned

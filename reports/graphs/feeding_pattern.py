@@ -9,19 +9,18 @@ import plotly.graph_objs as go
 import plotly.colors as colors
 
 from core.utils import duration_string
-from core.models import Feeding
+from core.choices import FeedingMethod
 
 from reports import utils
 
 from datetime import timedelta
 
 FEEDING_COLORS = {
-    method: colors.DEFAULT_PLOTLY_COLORS[i]
-    for i, (method, _) in enumerate(Feeding.method.field.choices)
+    m.value: colors.DEFAULT_PLOTLY_COLORS[i] for i, m in enumerate(FeedingMethod)
 }
 NOT_FEEDING_COLOR = "rgba(255, 255, 255, 0)"
 
-FEEDING_METHOD_LOOKUP = dict(Feeding.method.field.choices)
+FEEDING_METHOD_LOOKUP = {m.value: m.label for m in FeedingMethod}
 
 
 def feeding_pattern(feedings):

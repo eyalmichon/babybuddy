@@ -8,6 +8,7 @@ from django.utils import timezone
 from faker import Faker
 
 from core import models
+from core.choices import FeedingMethod, FeedingType, MedicationFrequency, MedicationUnit
 
 
 class ViewsTestCase(TestCase):
@@ -248,7 +249,7 @@ class ViewsTestCase(TestCase):
         schedule = models.MedicationSchedule.objects.create(
             child=child,
             name="Vitamin D",
-            frequency="daily",
+            frequency=MedicationFrequency.DAILY,
         )
         page = self.c.get("/medication-schedules/{}/".format(schedule.id))
         self.assertEqual(page.status_code, 200)
@@ -261,8 +262,8 @@ class ViewsTestCase(TestCase):
             child=child,
             name="Ibuprofen",
             amount=100,
-            amount_unit="mg",
-            frequency="daily",
+            amount_unit=MedicationUnit.MG,
+            frequency=MedicationFrequency.DAILY,
         )
         # GET should not be allowed
         page = self.c.get("/medication-schedules/{}/give/".format(schedule.id))
@@ -321,8 +322,8 @@ class LastEntryBannerTestCase(TestCase):
             child=self.child,
             start=timezone.now() - timezone.timedelta(hours=2),
             end=timezone.now() - timezone.timedelta(hours=1),
-            type="breast milk",
-            method="left breast",
+            type=FeedingType.BREAST_MILK,
+            method=FeedingMethod.LEFT_BREAST,
         )
         page = self.c.get("/feedings/add/", {"child": self.child.slug})
         self.assertEqual(page.status_code, 200)
@@ -396,8 +397,8 @@ class LastEntryBannerTestCase(TestCase):
             child=self.child,
             start=timezone.now() - timezone.timedelta(hours=2),
             end=timezone.now() - timezone.timedelta(hours=1),
-            type="breast milk",
-            method="left breast",
+            type=FeedingType.BREAST_MILK,
+            method=FeedingMethod.LEFT_BREAST,
         )
         page = self.c.get("/feedings/add/")
         self.assertEqual(page.status_code, 200)
@@ -445,8 +446,8 @@ class LastEntryBannerFragmentTestCase(TestCase):
             child=self.child,
             start=timezone.now() - timezone.timedelta(hours=2),
             end=timezone.now() - timezone.timedelta(hours=1),
-            type="breast milk",
-            method="left breast",
+            type=FeedingType.BREAST_MILK,
+            method=FeedingMethod.LEFT_BREAST,
         )
         url = "/last-entry-banner/feeding/{}/".format(self.child.pk)
         resp = self.c.get(url)

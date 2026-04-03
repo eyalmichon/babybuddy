@@ -11,6 +11,7 @@ from django.utils import timezone
 from faker import Faker
 
 from core import models
+from core.choices import FeedingMethod
 
 
 class Command(BaseCommand):
@@ -193,7 +194,7 @@ class Command(BaseCommand):
         """
         method = choice(models.Feeding._meta.get_field("method").choices)[0]
         amount = None
-        if method == "bottle":
+        if method == FeedingMethod.BOTTLE:
             amount = Decimal("%d.%d" % (randint(0, 6), randint(0, 9)))
         start = self.time + timedelta(minutes=randint(1, 60))
         end = start + timedelta(minutes=randint(5, 20))

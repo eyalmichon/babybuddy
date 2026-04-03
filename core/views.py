@@ -7,6 +7,7 @@ from django.http import HttpResponseNotFound, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic.base import RedirectView, TemplateView
@@ -403,14 +404,14 @@ class HeadCircumferenceList(
 ):
     model = models.HeadCircumference
     template_name = "core/head_circumference_list.html"
-    permission_required = ("core.view_head_circumference",)
+    permission_required = ("core.view_headcircumference",)
     filterset_class = filters.HeadCircumferenceFilter
 
 
 class HeadCircumferenceAdd(CoreAddView):
     model = models.HeadCircumference
     template_name = "core/head_circumference_form.html"
-    permission_required = ("core.add_head_circumference",)
+    permission_required = ("core.add_headcircumference",)
     form_class = forms.HeadCircumferenceForm
     success_url = reverse_lazy("core:head-circumference-list")
 
@@ -418,7 +419,7 @@ class HeadCircumferenceAdd(CoreAddView):
 class HeadCircumferenceUpdate(CoreUpdateView):
     model = models.HeadCircumference
     template_name = "core/head_circumference_form.html"
-    permission_required = ("core.change_head_circumference",)
+    permission_required = ("core.change_headcircumference",)
     form_class = forms.HeadCircumferenceForm
     success_url = reverse_lazy("core:head-circumference-list")
 
@@ -426,7 +427,7 @@ class HeadCircumferenceUpdate(CoreUpdateView):
 class HeadCircumferenceDelete(CoreDeleteView):
     model = models.HeadCircumference
     template_name = "core/head_circumference_confirm_delete.html"
-    permission_required = ("core.delete_head_circumference",)
+    permission_required = ("core.delete_headcircumference",)
     success_url = reverse_lazy("core:head-circumference-list")
 
 
@@ -545,7 +546,7 @@ class TagAdminList(
 ):
     model = models.Tag
     template_name = "core/tag_list.html"
-    permission_required = ("core.view_tags",)
+    permission_required = ("core.view_tag",)
     filterset_class = filters.TagFilter
 
     def get_queryset(self):
@@ -559,7 +560,7 @@ class TagAdminList(
 
 class TagAdminDetail(PermissionRequiredMixin, DetailView):
     model = models.Tag
-    permission_required = ("core.view_tags",)
+    permission_required = ("core.view_tag",)
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -791,9 +792,14 @@ class TimerAddQuick(PermissionRequiredMixin, RedirectView):
         elif models.Child.count() == 1:
             instance.child = models.Child.objects.first()
         instance.save()
-        self.url = request.GET.get(
-            "next", reverse("core:timer-detail", args={instance.id})
-        )
+        default_url = reverse("core:timer-detail", args={instance.id})
+        next_url = request.GET.get("next", "")
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url, allowed_hosts={request.get_host()}
+        ):
+            self.url = next_url
+        else:
+            self.url = default_url
         return super(TimerAddQuick, self).get(request, *args, **kwargs)
 
 

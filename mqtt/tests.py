@@ -23,6 +23,12 @@ from core.models import (
     Temperature,
     Timer,
 )
+from core.choices import (
+    DiaperColor,
+    FeedingMethod,
+    FeedingType,
+    MedicationFrequency,
+)
 
 from mqtt.client import MqttClient
 from mqtt.discovery import (
@@ -83,8 +89,8 @@ class MqttSerializerTests(TestCase):
             child=self.child,
             start=now - datetime.timedelta(minutes=30),
             end=now,
-            type="breast milk",
-            method="both breasts",
+            type=FeedingType.BREAST_MILK,
+            method=FeedingMethod.BOTH_BREASTS,
             amount=120,
         )
         data = MqttFeedingSerializer(feeding).data
@@ -159,15 +165,15 @@ class ComputeStatsTests(TestCase):
             child=self.child,
             start=now - datetime.timedelta(hours=2),
             end=now - datetime.timedelta(hours=1, minutes=30),
-            type="breast milk",
-            method="both breasts",
+            type=FeedingType.BREAST_MILK,
+            method=FeedingMethod.BOTH_BREASTS,
         )
         Feeding.objects.create(
             child=self.child,
             start=now - datetime.timedelta(minutes=45),
             end=now - datetime.timedelta(minutes=15),
-            type="formula",
-            method="bottle",
+            type=FeedingType.FORMULA,
+            method=FeedingMethod.BOTTLE,
         )
 
         # Diaper change
@@ -188,7 +194,7 @@ class ComputeStatsTests(TestCase):
         schedule = MedicationSchedule.objects.create(
             child=self.child,
             name="Vitamin D",
-            frequency="daily",
+            frequency=MedicationFrequency.DAILY,
             schedule_time=datetime.time(8, 0),
             active=True,
         )
@@ -236,8 +242,8 @@ class PublisherSignalTests(TestCase):
             child=self.child,
             start=now - datetime.timedelta(minutes=30),
             end=now,
-            type="breast milk",
-            method="bottle",
+            type=FeedingType.BREAST_MILK,
+            method=FeedingMethod.BOTTLE,
         )
         on_model_save(Feeding, feeding, created=True)
 
@@ -265,7 +271,11 @@ class PublisherSignalTests(TestCase):
         mock_get_settings.return_value = _mock_mqtt_settings(enabled=True)
 
         dc = DiaperChange.objects.create(
-            child=self.child, time=timezone.now(), wet=True, solid=True, color="yellow"
+            child=self.child,
+            time=timezone.now(),
+            wet=True,
+            solid=True,
+            color=DiaperColor.YELLOW,
         )
         on_model_save(DiaperChange, dc, created=True)
 
@@ -332,7 +342,7 @@ class PublisherSignalTests(TestCase):
         schedule = MedicationSchedule.objects.create(
             child=self.child,
             name="Vitamin D",
-            frequency="daily",
+            frequency=MedicationFrequency.DAILY,
             schedule_time=datetime.time(8, 0),
             active=True,
         )
@@ -365,8 +375,8 @@ class PublisherSignalTests(TestCase):
             child=self.child,
             start=now - datetime.timedelta(minutes=30),
             end=now,
-            type="breast milk",
-            method="bottle",
+            type=FeedingType.BREAST_MILK,
+            method=FeedingMethod.BOTTLE,
         )
         on_model_save(Feeding, feeding, created=True)
 
@@ -394,8 +404,8 @@ class PublisherSignalTests(TestCase):
             child=self.child,
             start=now - datetime.timedelta(minutes=30),
             end=now,
-            type="breast milk",
-            method="bottle",
+            type=FeedingType.BREAST_MILK,
+            method=FeedingMethod.BOTTLE,
         )
         on_model_save(Feeding, feeding, created=True)
 
@@ -606,8 +616,8 @@ class HADiscoveryToggleTests(TestCase):
             child=self.child,
             start=now - datetime.timedelta(minutes=30),
             end=now,
-            type="breast milk",
-            method="bottle",
+            type=FeedingType.BREAST_MILK,
+            method=FeedingMethod.BOTTLE,
         )
         on_model_save(Feeding, feeding, created=True)
 

@@ -16,6 +16,14 @@ from taggit.models import GenericTaggedItemBase, TagBase
 from django.db.models.signals import post_delete, post_save
 
 from babybuddy.site_settings import NapSettings
+from core.choices import (
+    DiaperColor,
+    FeedingMethod,
+    FeedingType,
+    MedicationFrequency,
+    MedicationUnit,
+    Sex,
+)
 from core.utils import random_color, timezone_aware_duration
 
 
@@ -250,12 +258,7 @@ class DiaperChange(models.Model):
     solid = models.BooleanField(verbose_name=_("Solid"))
     color = models.CharField(
         blank=True,
-        choices=[
-            ("black", _("Black")),
-            ("brown", _("Brown")),
-            ("green", _("Green")),
-            ("yellow", _("Yellow")),
-        ],
+        choices=DiaperColor.choices,
         max_length=255,
         verbose_name=_("Color"),
     )
@@ -309,24 +312,12 @@ class Feeding(models.Model):
         editable=False, null=True, verbose_name=_("Duration")
     )
     type = models.CharField(
-        choices=[
-            ("breast milk", _("Breast milk")),
-            ("formula", _("Formula")),
-            ("fortified breast milk", _("Fortified breast milk")),
-            ("solid food", _("Solid food")),
-        ],
+        choices=FeedingType.choices,
         max_length=255,
         verbose_name=_("Type"),
     )
     method = models.CharField(
-        choices=[
-            ("bottle", _("Bottle")),
-            ("left breast", _("Left breast")),
-            ("right breast", _("Right breast")),
-            ("both breasts", _("Both breasts")),
-            ("parent fed", _("Parent fed")),
-            ("self fed", _("Self fed")),
-        ],
+        choices=FeedingMethod.choices,
         max_length=255,
         verbose_name=_("Method"),
     )
@@ -481,10 +472,7 @@ class HeightPercentile(models.Model):
     sex = models.CharField(
         null=False,
         max_length=255,
-        choices=[
-            ("girl", _("Girl")),
-            ("boy", _("Boy")),
-        ],
+        choices=Sex.choices,
     )
 
     class Meta:
@@ -777,26 +765,6 @@ class TummyTime(models.Model):
 class MedicationSchedule(models.Model):
     model_name = "medicationschedule"
 
-    UNIT_CHOICES = [
-        ("ml", _("ml")),
-        ("mg", _("mg")),
-        ("drops", _("drops")),
-        ("IU", _("IU")),
-        ("oz", _("oz")),
-        ("tbsp", _("tbsp")),
-        ("tsp", _("tsp")),
-        ("puffs", _("puffs")),
-    ]
-
-    FREQUENCY_DAILY = "daily"
-    FREQUENCY_INTERVAL = "interval"
-    FREQUENCY_WEEKLY = "weekly"
-    FREQUENCY_CHOICES = [
-        (FREQUENCY_DAILY, _("Daily")),
-        (FREQUENCY_INTERVAL, _("Every X hours")),
-        (FREQUENCY_WEEKLY, _("Specific days of week")),
-    ]
-
     DAY_FIELDS = [
         "monday",
         "tuesday",
@@ -816,13 +784,16 @@ class MedicationSchedule(models.Model):
     name = models.CharField(max_length=255, verbose_name=_("Name"))
     amount = models.FloatField(blank=True, null=True, verbose_name=_("Amount"))
     amount_unit = models.CharField(
-        max_length=50, blank=True, choices=UNIT_CHOICES, verbose_name=_("Amount unit")
+        max_length=50,
+        blank=True,
+        choices=MedicationUnit.choices,
+        verbose_name=_("Amount unit"),
     )
 
     frequency = models.CharField(
         max_length=20,
-        choices=FREQUENCY_CHOICES,
-        default=FREQUENCY_DAILY,
+        choices=MedicationFrequency.choices,
+        default=MedicationFrequency.DAILY,
         verbose_name=_("Frequency"),
     )
     schedule_time = models.TimeField(
@@ -867,11 +838,11 @@ class MedicationSchedule(models.Model):
 
     def is_due_today(self):
         """Return True if this schedule applies to today."""
-        if self.frequency == self.FREQUENCY_DAILY:
+        if self.frequency == MedicationFrequency.DAILY:
             return True
-        if self.frequency == self.FREQUENCY_INTERVAL:
+        if self.frequency == MedicationFrequency.INTERVAL:
             return True
-        if self.frequency == self.FREQUENCY_WEEKLY:
+        if self.frequency == MedicationFrequency.WEEKLY:
             return timezone.localdate().weekday() in self.get_scheduled_days()
         return False
 
@@ -893,7 +864,7 @@ class MedicationSchedule(models.Model):
         now = timezone.localtime()
         tz = timezone.get_current_timezone()
 
-        if self.frequency == self.FREQUENCY_INTERVAL:
+        if self.frequency == MedicationFrequency.INTERVAL:
             if reference_time and self.interval_hours:
                 return reference_time + datetime.timedelta(hours=self.interval_hours)
             return now
@@ -904,7 +875,7 @@ class MedicationSchedule(models.Model):
                 # 12-hour buffer: the next occurrence must be at least half a
                 # day after the last dose.
                 earliest = reference_time + datetime.timedelta(hours=12)
-                if self.frequency == self.FREQUENCY_WEEKLY:
+                if self.frequency == MedicationFrequency.WEEKLY:
                     return self._next_weekly_occurrence(earliest, tz)
                 # Daily with specific time.
                 candidate = timezone.make_aware(
@@ -916,7 +887,7 @@ class MedicationSchedule(models.Model):
                 return candidate
             else:
                 # No specific time -- "once per day / per scheduled weekday".
-                if self.frequency == self.FREQUENCY_WEEKLY:
+                if self.frequency == MedicationFrequency.WEEKLY:
                     next_day_start = timezone.make_aware(
                         datetime.datetime.combine(
                             reference_time.date() + datetime.timedelta(days=1),
@@ -932,7 +903,7 @@ class MedicationSchedule(models.Model):
                 )
 
         # No reference_time – first dose or fallback.
-        if self.frequency == self.FREQUENCY_WEEKLY:
+        if self.frequency == MedicationFrequency.WEEKLY:
             return self._next_weekly_occurrence(now, tz)
         if self.schedule_time:
             return timezone.make_aware(
@@ -992,7 +963,7 @@ class Medication(models.Model):
     amount_unit = models.CharField(
         max_length=50,
         blank=True,
-        choices=MedicationSchedule.UNIT_CHOICES,
+        choices=MedicationUnit.choices,
         verbose_name=_("Amount unit"),
     )
     notes = models.TextField(blank=True, null=True, verbose_name=_("Notes"))
@@ -1054,10 +1025,7 @@ class WeightPercentile(models.Model):
     sex = models.CharField(
         null=False,
         max_length=255,
-        choices=[
-            ("girl", _("Girl")),
-            ("boy", _("Boy")),
-        ],
+        choices=Sex.choices,
     )
 
     class Meta:

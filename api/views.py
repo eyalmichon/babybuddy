@@ -9,6 +9,13 @@ from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
 
 from core import models
+from core.choices import (
+    DiaperColor,
+    FeedingMethod,
+    FeedingType,
+    MedicationUnit,
+    get_choice_detail,
+)
 from babybuddy import models as babybuddy_models
 from mqtt.stats import compute_stats
 
@@ -509,18 +516,21 @@ class HADiscoveryView(views.APIView):
                     "default": "today",
                     "name": "Birth Date",
                     "description": "Child's date of birth",
+                    "order": 30,
                 },
                 "first_name": {
                     "type": "string",
                     "required": True,
                     "name": "First Name",
                     "description": "Child's first name",
+                    "order": 10,
                 },
                 "last_name": {
                     "type": "string",
                     "required": True,
                     "name": "Last Name",
                     "description": "Child's last name",
+                    "order": 20,
                 },
             },
         },
@@ -538,12 +548,14 @@ class HADiscoveryView(views.APIView):
                     "name": "BMI",
                     "description": "Body mass index value",
                     "selector_hints": {"min": 0.1, "max": 100.0, "step": 0.1},
+                    "order": 10,
                 },
                 "date": {
                     "type": "date",
                     "required": False,
                     "name": "Date",
                     "description": "Date of measurement",
+                    "order": 20,
                 },
             },
         },
@@ -560,6 +572,7 @@ class HADiscoveryView(views.APIView):
                     "required": False,
                     "name": "Time",
                     "description": "Date and time of the diaper change",
+                    "order": 10,
                 },
                 "type": {
                     "type": "select",
@@ -567,6 +580,7 @@ class HADiscoveryView(views.APIView):
                     "required": False,
                     "name": "Type",
                     "description": "Diaper change type",
+                    "order": 20,
                 },
                 "color": {
                     "type": "select",
@@ -574,6 +588,7 @@ class HADiscoveryView(views.APIView):
                     "required": False,
                     "name": "Color",
                     "description": "Diaper contents color",
+                    "order": 30,
                 },
                 "amount": {
                     "type": "float",
@@ -581,6 +596,7 @@ class HADiscoveryView(views.APIView):
                     "name": "Amount",
                     "description": "Amount of diaper contents",
                     "selector_hints": {"min": 0.0, "max": 500.0, "step": 0.1},
+                    "order": 40,
                 },
             },
             "transforms": {
@@ -602,6 +618,7 @@ class HADiscoveryView(views.APIView):
                     "required": True,
                     "name": "Type",
                     "description": "Type of feeding",
+                    "order": 10,
                 },
                 "method": {
                     "type": "select",
@@ -609,6 +626,7 @@ class HADiscoveryView(views.APIView):
                     "required": True,
                     "name": "Method",
                     "description": "Feeding method",
+                    "order": 20,
                 },
                 "amount": {
                     "type": "float",
@@ -616,6 +634,7 @@ class HADiscoveryView(views.APIView):
                     "name": "Amount",
                     "description": "Amount consumed",
                     "selector_hints": {"min": 0.0, "max": 500.0, "step": 0.1},
+                    "order": 30,
                 },
                 "notes": {
                     "type": "string",
@@ -623,6 +642,7 @@ class HADiscoveryView(views.APIView):
                     "name": "Notes",
                     "description": "Additional notes",
                     "multiline": True,
+                    "order": 90,
                 },
             },
             "transforms": {
@@ -644,12 +664,14 @@ class HADiscoveryView(views.APIView):
                     "name": "Head Circumference",
                     "description": "Head circumference measurement",
                     "selector_hints": {"min": 0.1, "step": 0.1},
+                    "order": 10,
                 },
                 "date": {
                     "type": "date",
                     "required": False,
                     "name": "Date",
                     "description": "Date of measurement",
+                    "order": 20,
                 },
             },
         },
@@ -667,12 +689,14 @@ class HADiscoveryView(views.APIView):
                     "name": "Height",
                     "description": "Height measurement",
                     "selector_hints": {"min": 0.1, "step": 0.1},
+                    "order": 10,
                 },
                 "date": {
                     "type": "date",
                     "required": False,
                     "name": "Date",
                     "description": "Date of measurement",
+                    "order": 20,
                 },
             },
         },
@@ -690,6 +714,7 @@ class HADiscoveryView(views.APIView):
                     "name": "Child",
                     "description": "Child to add the note for",
                     "entity_domain": "sensor",
+                    "order": 5,
                 },
                 "note": {
                     "type": "string",
@@ -697,18 +722,21 @@ class HADiscoveryView(views.APIView):
                     "name": "Note",
                     "description": "Note text",
                     "multiline": True,
+                    "order": 10,
                 },
                 "time": {
                     "type": "datetime",
                     "required": False,
                     "name": "Time",
                     "description": "Date and time of the note",
+                    "order": 20,
                 },
                 "tags": {
                     "type": "string_list",
                     "required": False,
                     "name": "Tags",
                     "description": "Tags to associate with the note",
+                    "order": 90,
                 },
             },
         },
@@ -726,6 +754,7 @@ class HADiscoveryView(views.APIView):
                     "name": "Amount",
                     "description": "Amount pumped",
                     "selector_hints": {"min": 0.0, "max": 500.0, "step": 0.1},
+                    "order": 10,
                 },
                 "notes": {
                     "type": "string",
@@ -733,6 +762,7 @@ class HADiscoveryView(views.APIView):
                     "name": "Notes",
                     "description": "Additional notes",
                     "multiline": True,
+                    "order": 90,
                 },
             },
         },
@@ -749,6 +779,7 @@ class HADiscoveryView(views.APIView):
                     "required": False,
                     "name": "Nap",
                     "description": "Was this a nap (not overnight sleep)?",
+                    "order": 10,
                 },
                 "notes": {
                     "type": "string",
@@ -756,6 +787,7 @@ class HADiscoveryView(views.APIView):
                     "name": "Notes",
                     "description": "Additional notes",
                     "multiline": True,
+                    "order": 90,
                 },
             },
         },
@@ -773,12 +805,14 @@ class HADiscoveryView(views.APIView):
                     "name": "Temperature",
                     "description": "Temperature reading",
                     "selector_hints": {"min": 35.0, "max": 150.0, "step": 0.1},
+                    "order": 10,
                 },
                 "time": {
                     "type": "datetime",
                     "required": False,
                     "name": "Time",
                     "description": "Date and time of the reading",
+                    "order": 20,
                 },
             },
         },
@@ -796,6 +830,7 @@ class HADiscoveryView(views.APIView):
                     "name": "Milestone",
                     "description": "Milestone achieved during tummy time",
                     "multiline": True,
+                    "order": 10,
                 },
             },
         },
@@ -813,12 +848,14 @@ class HADiscoveryView(views.APIView):
                     "name": "Weight",
                     "description": "Weight measurement",
                     "selector_hints": {"min": 0.1, "step": 0.1},
+                    "order": 10,
                 },
                 "date": {
                     "type": "date",
                     "required": False,
                     "name": "Date",
                     "description": "Date of measurement",
+                    "order": 20,
                 },
             },
         },
@@ -835,6 +872,7 @@ class HADiscoveryView(views.APIView):
                     "required": True,
                     "name": "Medication Name",
                     "description": "Name of the medication",
+                    "order": 10,
                 },
                 "amount": {
                     "type": "float",
@@ -842,6 +880,7 @@ class HADiscoveryView(views.APIView):
                     "name": "Amount",
                     "description": "Medication dosage amount",
                     "selector_hints": {"min": 0.0, "max": 500.0, "step": 0.1},
+                    "order": 20,
                 },
                 "amount_unit": {
                     "type": "select",
@@ -849,12 +888,14 @@ class HADiscoveryView(views.APIView):
                     "required": True,
                     "name": "Amount Unit",
                     "description": "Unit for the dosage amount",
+                    "order": 30,
                 },
                 "time": {
                     "type": "datetime",
                     "required": False,
                     "name": "Time",
                     "description": "Date and time the medication was given",
+                    "order": 40,
                 },
             },
         },
@@ -872,6 +913,7 @@ class HADiscoveryView(views.APIView):
                     "name": "Child",
                     "description": "Child to give medication to",
                     "entity_domain": "sensor",
+                    "order": 5,
                 },
                 "schedule_id": {
                     "type": "int",
@@ -879,12 +921,14 @@ class HADiscoveryView(views.APIView):
                     "name": "Schedule ID",
                     "description": "Medication schedule to give from",
                     "selector_hints": {"min": 1},
+                    "order": 10,
                 },
                 "name": {
                     "type": "string",
                     "required": True,
                     "name": "Medication Name",
                     "description": "Name of the medication",
+                    "order": 20,
                 },
                 "amount": {
                     "type": "float",
@@ -892,6 +936,7 @@ class HADiscoveryView(views.APIView):
                     "name": "Amount",
                     "description": "Medication dosage amount",
                     "selector_hints": {"min": 0.0, "max": 500.0, "step": 0.1},
+                    "order": 30,
                 },
                 "amount_unit": {
                     "type": "select",
@@ -899,6 +944,7 @@ class HADiscoveryView(views.APIView):
                     "required": True,
                     "name": "Amount Unit",
                     "description": "Unit for the dosage amount",
+                    "order": 40,
                 },
             },
             "extra_data": {
@@ -920,6 +966,7 @@ class HADiscoveryView(views.APIView):
                     "name": "Entity",
                     "description": "Baby Buddy sensor entity to delete from",
                     "entity_domain": "sensor",
+                    "order": 10,
                 },
             },
         },
@@ -937,18 +984,21 @@ class HADiscoveryView(views.APIView):
                     "name": "Child",
                     "description": "Child to start the timer for",
                     "entity_domain": "switch",
+                    "order": 5,
                 },
                 "start": {
                     "type": "datetime",
                     "required": False,
                     "name": "Start Time",
                     "description": "Timer start time (defaults to now)",
+                    "order": 10,
                 },
                 "name": {
                     "type": "string",
                     "required": False,
                     "name": "Timer Name",
                     "description": "Optional name for the timer",
+                    "order": 20,
                 },
             },
         },
@@ -983,6 +1033,7 @@ class HADiscoveryView(views.APIView):
                     "name": "Diaper Color",
                     "icon": "mdi:palette",
                     "options": _get_choice_labels(models.DiaperChange, "color"),
+                    "options_detail": get_choice_detail(DiaperColor),
                 },
                 {
                     "key": "change_type",
@@ -995,12 +1046,14 @@ class HADiscoveryView(views.APIView):
                     "name": "Feeding Method",
                     "icon": "mdi:baby-bottle-outline",
                     "options": _get_choice_labels(models.Feeding, "method"),
+                    "options_detail": get_choice_detail(FeedingMethod),
                 },
                 {
                     "key": "feeding_type",
                     "name": "Feeding Type",
                     "icon": "mdi:baby-bottle-outline",
                     "options": _get_choice_labels(models.Feeding, "type"),
+                    "options_detail": get_choice_detail(FeedingType),
                 },
                 {
                     "key": "medication_units",
@@ -1009,6 +1062,7 @@ class HADiscoveryView(views.APIView):
                     "options": _get_choice_labels(
                         models.MedicationSchedule, "amount_unit"
                     ),
+                    "options_detail": get_choice_detail(MedicationUnit),
                     "entity": False,
                 },
             ],

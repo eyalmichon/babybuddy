@@ -11,6 +11,13 @@ from django.utils.formats import get_format, reset_format_cache
 from faker import Faker
 
 from core import models
+from core.choices import (
+    DiaperColor,
+    FeedingMethod,
+    FeedingType,
+    MedicationFrequency,
+    MedicationUnit,
+)
 
 
 class FormsTestCaseBase(TestCase):
@@ -91,22 +98,22 @@ class InitialValuesTestCase(FormsTestCaseBase):
             child=self.child,
             start=start_time,
             end=end_time,
-            type="breast milk",
-            method="left breast",
+            type=FeedingType.BREAST_MILK,
+            method=FeedingMethod.LEFT_BREAST,
         )
         f_two = models.Feeding.objects.create(
             child=child_two,
             start=start_time,
             end=end_time,
-            type="formula",
-            method="bottle",
+            type=FeedingType.FORMULA,
+            method=FeedingMethod.BOTTLE,
         )
         f_three = models.Feeding.objects.create(
             child=child_three,
             start=start_time,
             end=end_time,
-            type="fortified breast milk",
-            method="bottle",
+            type=FeedingType.FORTIFIED_BREAST_MILK,
+            method=FeedingMethod.BOTTLE,
         )
 
         page = self.c.get("/feedings/add/")
@@ -233,7 +240,7 @@ class DiaperChangeFormsTestCase(FormsTestCaseBase):
             time=timezone.localtime(),
             wet=True,
             solid=True,
-            color="black",
+            color=DiaperColor.BLACK,
             amount=0.45,
         )
 
@@ -242,7 +249,7 @@ class DiaperChangeFormsTestCase(FormsTestCaseBase):
         params = {
             "child": child.id,
             "time": self.localtime_string(),
-            "color": "black",
+            "color": DiaperColor.BLACK,
             "amount": 0.45,
         }
         page = self.c.post("/changes/add/", params, follow=True)
@@ -280,8 +287,8 @@ class FeedingFormsTestCase(FormsTestCaseBase):
             child=cls.child,
             start=timezone.localtime() - timezone.timedelta(hours=2),
             end=timezone.localtime() - timezone.timedelta(hours=1, minutes=30),
-            type="breast milk",
-            method="left breast",
+            type=FeedingType.BREAST_MILK,
+            method=FeedingMethod.LEFT_BREAST,
             amount=2.5,
         )
 
@@ -292,8 +299,8 @@ class FeedingFormsTestCase(FormsTestCaseBase):
             "child": self.child.id,
             "start": self.localtime_string(start),
             "end": self.localtime_string(end),
-            "type": "formula",
-            "method": "bottle",
+            "type": FeedingType.FORMULA,
+            "method": FeedingMethod.BOTTLE,
             "amount": 0,
         }
         page = self.c.post("/feedings/add/", params, follow=True)
@@ -676,7 +683,7 @@ class MedicationFormsTestCase(FormsTestCaseBase):
             child=cls.child,
             name="Vitamin D",
             amount=400,
-            amount_unit="IU",
+            amount_unit=MedicationUnit.IU,
             time=timezone.localtime() - timezone.timedelta(days=1),
         )
 
@@ -685,7 +692,7 @@ class MedicationFormsTestCase(FormsTestCaseBase):
             "child": self.child.id,
             "name": "Ibuprofen",
             "amount": "100",
-            "amount_unit": "mg",
+            "amount_unit": MedicationUnit.MG,
             "time": self.localtime_string(),
         }
         page = self.c.post("/medications/add/", params, follow=True)
@@ -699,7 +706,7 @@ class MedicationFormsTestCase(FormsTestCaseBase):
             "child": self.med.child.id,
             "name": "Updated Med",
             "amount": "200",
-            "amount_unit": "mg",
+            "amount_unit": MedicationUnit.MG,
             "time": self.localtime_string(),
         }
         page = self.c.post("/medications/{}/".format(self.med.id), params, follow=True)
@@ -723,7 +730,7 @@ class MedicationScheduleFormsTestCase(FormsTestCaseBase):
         cls.schedule = models.MedicationSchedule.objects.create(
             child=cls.child,
             name="Vitamin D",
-            frequency="daily",
+            frequency=MedicationFrequency.DAILY,
             schedule_time="09:00:00",
             active=True,
         )
@@ -732,7 +739,7 @@ class MedicationScheduleFormsTestCase(FormsTestCaseBase):
         params = {
             "child": self.child.id,
             "name": "Ibuprofen",
-            "frequency": "daily",
+            "frequency": MedicationFrequency.DAILY,
             "schedule_time": "08:00:00",
             "active": True,
         }
@@ -747,7 +754,7 @@ class MedicationScheduleFormsTestCase(FormsTestCaseBase):
         params = {
             "child": self.schedule.child.id,
             "name": "Updated Schedule",
-            "frequency": "daily",
+            "frequency": MedicationFrequency.DAILY,
             "schedule_time": "10:00:00",
             "active": True,
         }

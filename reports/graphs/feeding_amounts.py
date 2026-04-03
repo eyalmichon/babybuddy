@@ -6,7 +6,7 @@ import plotly.offline as plotly
 import plotly.graph_objs as go
 
 from reports import utils
-from core import models
+from core.choices import FeedingType
 
 
 def feeding_amounts(instances):
@@ -15,9 +15,7 @@ def feeding_amounts(instances):
     :param instances: a QuerySet of Feeding instances.
     :returns: a tuple of the graph's html and javascript.
     """
-    feeding_types, feeding_types_desc = map(
-        list, zip(*models.Feeding._meta.get_field("type").choices)
-    )
+    feeding_types, feeding_types_desc = map(list, zip(*FeedingType.choices))
     total_idx = len(feeding_types) + 1  # +1 for aggregate total
     totals_list = list()
     for i in range(total_idx):

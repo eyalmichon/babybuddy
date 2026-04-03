@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 from babybuddy.models import get_user_model
 from core import models
+from core.choices import (
+    DiaperColor,
+    FeedingMethod,
+    FeedingType,
+    MedicationFrequency,
+    MedicationUnit,
+)
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -256,7 +263,7 @@ class DiaperChangeAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
             "time": "2017-11-18T12:00:00-05:00",
             "wet": True,
             "solid": True,
-            "color": "brown",
+            "color": DiaperColor.BROWN,
             "amount": 1.25,
             "notes": "seedy",
         }
@@ -274,7 +281,7 @@ class DiaperChangeAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
             "child": 1,
             "wet": False,
             "solid": True,
-            "color": "black",
+            "color": DiaperColor.BLACK,
             "amount": 3,
             "notes": "noxious",
         }
@@ -307,7 +314,10 @@ class DiaperChangeAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
 class FeedingAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
     endpoint = reverse("api:feeding-list")
     model = models.Feeding
-    timer_test_data = {"type": "breast milk", "method": "left breast"}
+    timer_test_data = {
+        "type": FeedingType.BREAST_MILK,
+        "method": FeedingMethod.LEFT_BREAST,
+    }
 
     def test_get(self):
         response = self.client.get(self.endpoint)
@@ -320,8 +330,8 @@ class FeedingAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
                 "start": "2017-11-18T09:00:00-05:00",
                 "end": "2017-11-18T09:15:00-05:00",
                 "duration": "00:15:00",
-                "type": "formula",
-                "method": "bottle",
+                "type": FeedingType.FORMULA,
+                "method": FeedingMethod.BOTTLE,
                 "amount": 2.5,
                 "notes": "forgot vitamins :(",
                 "tags": [],
@@ -346,8 +356,8 @@ class FeedingAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
             "child": 1,
             "start": "2017-11-19T14:00:00-05:00",
             "end": "2017-11-19T14:15:00-05:00",
-            "type": "breast milk",
-            "method": "left breast",
+            "type": FeedingType.BREAST_MILK,
+            "method": FeedingMethod.LEFT_BREAST,
             "notes": "with vitamins",
         }
         response = self.client.post(self.endpoint, data, format="json")
@@ -360,8 +370,8 @@ class FeedingAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
         endpoint = "{}{}/".format(self.endpoint, 3)
         response = self.client.get(endpoint)
         entry = response.data
-        entry["type"] = "breast milk"
-        entry["method"] = "left breast"
+        entry["type"] = FeedingType.BREAST_MILK
+        entry["method"] = FeedingMethod.LEFT_BREAST
         entry["amount"] = 0
         response = self.client.patch(
             endpoint,
@@ -655,7 +665,7 @@ class MedicationAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
             child=child,
             name="Vitamin D",
             amount=400,
-            amount_unit="IU",
+            amount_unit=MedicationUnit.IU,
             time="2017-11-18T12:00:00-05:00",
         )
         self.delete_id = self.med.id
@@ -672,7 +682,7 @@ class MedicationAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
             "child": 1,
             "name": "Ibuprofen",
             "amount": 100,
-            "amount_unit": "mg",
+            "amount_unit": MedicationUnit.MG,
             "time": "2017-11-20T10:00:00-05:00",
         }
         response = self.client.post(self.endpoint, data, format="json")
@@ -705,8 +715,8 @@ class MedicationScheduleAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
             child=child,
             name="Vitamin D",
             amount=400,
-            amount_unit="IU",
-            frequency="daily",
+            amount_unit=MedicationUnit.IU,
+            frequency=MedicationFrequency.DAILY,
             schedule_time="09:00:00",
             active=True,
         )
@@ -718,13 +728,13 @@ class MedicationScheduleAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
         self.assertGreater(len(response.data["results"]), 0)
         result = response.data["results"][0]
         self.assertEqual(result["name"], "Vitamin D")
-        self.assertEqual(result["frequency"], "daily")
+        self.assertEqual(result["frequency"], MedicationFrequency.DAILY)
 
     def test_post(self):
         data = {
             "child": 1,
             "name": "Ibuprofen",
-            "frequency": "interval",
+            "frequency": MedicationFrequency.INTERVAL,
             "interval_hours": 6,
             "active": True,
         }
@@ -732,7 +742,7 @@ class MedicationScheduleAPITestCase(TestBase.BabyBuddyAPITestCaseBase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         obj = models.MedicationSchedule.objects.get(pk=response.data["id"])
         self.assertEqual(obj.name, "Ibuprofen")
-        self.assertEqual(obj.frequency, "interval")
+        self.assertEqual(obj.frequency, MedicationFrequency.INTERVAL)
 
     def test_patch(self):
         endpoint = "{}{}/".format(self.endpoint, self.schedule.id)
@@ -1004,14 +1014,14 @@ class TestLastActivitiesView(APITestCase):
             child=self.child,
             start=now - timezone.timedelta(hours=1),
             end=now,
-            type="breast milk",
-            method="left breast",
+            type=FeedingType.BREAST_MILK,
+            method=FeedingMethod.LEFT_BREAST,
         )
         response = self.client.get(self.endpoint)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNotNone(response.data["feedings"])
         self.assertIn("type", response.data["feedings"])
-        self.assertEqual(response.data["feedings"]["type"], "breast milk")
+        self.assertEqual(response.data["feedings"]["type"], FeedingType.BREAST_MILK)
 
     def test_includes_stats(self):
         response = self.client.get(self.endpoint)
@@ -1263,6 +1273,29 @@ class TestHADiscoveryView(APITestCase):
 
         give_med = next(s for s in services if s["key"] == "give_medication")
         self.assertEqual(give_med["fields"]["child"]["entity_domain"], "sensor")
+
+    def test_field_order_keys(self):
+        """Every service field should have an integer order key."""
+        response = self.client.get(self.endpoint)
+        for svc in response.data["services"]:
+            for field_key, field_def in svc["fields"].items():
+                self.assertIn(
+                    "order",
+                    field_def,
+                    f"Service {svc['key']}, field {field_key} missing 'order'",
+                )
+                self.assertIsInstance(
+                    field_def["order"],
+                    int,
+                    f"Service {svc['key']}, field {field_key} 'order' is not int",
+                )
+
+        services = response.data["services"]
+        feeding = next(s for s in services if s["key"] == "add_feeding")
+        self.assertEqual(feeding["fields"]["type"]["order"], 10)
+        self.assertEqual(feeding["fields"]["method"]["order"], 20)
+        self.assertEqual(feeding["fields"]["amount"]["order"], 30)
+        self.assertEqual(feeding["fields"]["notes"]["order"], 90)
 
     def test_requires_auth(self):
         self.client.logout()

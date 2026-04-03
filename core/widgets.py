@@ -1,9 +1,9 @@
-import datetime
 from typing import Any, Dict, Optional
 
 from django.forms import RadioSelect, widgets
 
 from . import models
+from .choices import get_color
 
 
 class TagsEditor(widgets.Widget):
@@ -117,3 +117,15 @@ class PillRadioSelect(RadioSelect):
         attrs = super().build_attrs(base_attrs, extra_attrs)
         attrs["class"] += " btn-check d-none"
         return attrs
+
+    def create_option(
+        self, name, value, label, selected, index, subindex=None, attrs=None
+    ):
+        option = super().create_option(
+            name, value, label, selected, index, subindex, attrs
+        )
+        color = get_color(str(value)) if value else None
+        if color:
+            option["attrs"]["data-color"] = color
+            option["color"] = color
+        return option

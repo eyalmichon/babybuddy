@@ -7,6 +7,13 @@ from django.test import TestCase
 from django.utils import timezone
 
 from core import models
+from core.choices import (
+    DiaperColor,
+    FeedingMethod,
+    FeedingType,
+    MedicationFrequency,
+    MedicationUnit,
+)
 
 
 class BMITestCase(TestCase):
@@ -94,7 +101,7 @@ class DiaperChangeTestCase(TestCase):
             time=timezone.localtime() - timezone.timedelta(days=1),
             wet=1,
             solid=1,
-            color="black",
+            color=DiaperColor.BLACK,
             amount=1.25,
         )
 
@@ -104,7 +111,7 @@ class DiaperChangeTestCase(TestCase):
         self.assertEqual(self.change.child, self.child)
         self.assertTrue(self.change.wet)
         self.assertTrue(self.change.solid)
-        self.assertEqual(self.change.color, "black")
+        self.assertEqual(self.change.color, DiaperColor.BLACK)
         self.assertEqual(self.change.amount, 1.25)
 
     def test_diaperchange_attributes(self):
@@ -123,8 +130,8 @@ class FeedingTestCase(TestCase):
             child=self.child,
             start=timezone.localtime() - timezone.timedelta(minutes=30),
             end=timezone.localtime(),
-            type="formula",
-            method="bottle",
+            type=FeedingType.FORMULA,
+            method=FeedingMethod.BOTTLE,
             amount=2,
         )
         self.assertEqual(feeding, models.Feeding.objects.first())
@@ -136,12 +143,12 @@ class FeedingTestCase(TestCase):
             child=self.child,
             start=timezone.localtime() - timezone.timedelta(minutes=30),
             end=timezone.localtime(),
-            type="breast milk",
-            method="both breasts",
+            type=FeedingType.BREAST_MILK,
+            method=FeedingMethod.BOTH_BREASTS,
         )
         self.assertEqual(feeding, models.Feeding.objects.first())
         self.assertEqual(str(feeding), "Feeding")
-        self.assertEqual(feeding.method, "both breasts")
+        self.assertEqual(feeding.method, FeedingMethod.BOTH_BREASTS)
 
 
 class HeadCircumferenceTestCase(TestCase):
@@ -392,8 +399,8 @@ class MedicationScheduleTestCase(TestCase):
             child=self.child,
             name="Vitamin D",
             amount=400,
-            amount_unit="IU",
-            frequency=models.MedicationSchedule.FREQUENCY_DAILY,
+            amount_unit=MedicationUnit.IU,
+            frequency=MedicationFrequency.DAILY,
             schedule_time=timezone.datetime.strptime("09:00", "%H:%M").time(),
             active=True,
         )
@@ -402,25 +409,25 @@ class MedicationScheduleTestCase(TestCase):
         self.assertEqual(self.schedule, models.MedicationSchedule.objects.first())
         self.assertEqual(str(self.schedule), "Vitamin D")
         self.assertEqual(self.schedule.amount, 400)
-        self.assertEqual(self.schedule.amount_unit, "IU")
+        self.assertEqual(self.schedule.amount_unit, MedicationUnit.IU)
 
     def test_is_due_today_daily(self):
-        self.schedule.frequency = models.MedicationSchedule.FREQUENCY_DAILY
+        self.schedule.frequency = MedicationFrequency.DAILY
         self.assertTrue(self.schedule.is_due_today())
 
     def test_is_due_today_interval(self):
-        self.schedule.frequency = models.MedicationSchedule.FREQUENCY_INTERVAL
+        self.schedule.frequency = MedicationFrequency.INTERVAL
         self.assertTrue(self.schedule.is_due_today())
 
     def test_is_due_today_weekly(self):
-        self.schedule.frequency = models.MedicationSchedule.FREQUENCY_WEEKLY
+        self.schedule.frequency = MedicationFrequency.WEEKLY
         today_weekday = timezone.localdate().weekday()
         day_field = models.MedicationSchedule.DAY_FIELDS[today_weekday]
         setattr(self.schedule, day_field, True)
         self.assertTrue(self.schedule.is_due_today())
 
     def test_is_not_due_today_weekly(self):
-        self.schedule.frequency = models.MedicationSchedule.FREQUENCY_WEEKLY
+        self.schedule.frequency = MedicationFrequency.WEEKLY
         # Set all days to False
         for day in models.MedicationSchedule.DAY_FIELDS:
             setattr(self.schedule, day, False)
@@ -440,12 +447,12 @@ class MedicationScheduleTestCase(TestCase):
         self.assertEqual(self.schedule.get_scheduled_days(), [0, 2, 4])
 
     def test_next_due_time_daily(self):
-        self.schedule.frequency = models.MedicationSchedule.FREQUENCY_DAILY
+        self.schedule.frequency = MedicationFrequency.DAILY
         due = self.schedule.next_due_time()
         self.assertEqual(due.time(), self.schedule.schedule_time)
 
     def test_next_due_time_interval(self):
-        self.schedule.frequency = models.MedicationSchedule.FREQUENCY_INTERVAL
+        self.schedule.frequency = MedicationFrequency.INTERVAL
         self.schedule.interval_hours = 6
         ref = timezone.localtime() - timezone.timedelta(hours=3)
         due = self.schedule.next_due_time(ref)
@@ -463,7 +470,7 @@ class MedicationTestCase(TestCase):
             child=self.child,
             name="Vitamin D",
             amount=400,
-            amount_unit="IU",
+            amount_unit=MedicationUnit.IU,
             time=timezone.localtime() - timezone.timedelta(days=1),
         )
 

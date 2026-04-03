@@ -40,6 +40,14 @@
     row-gap: 10px;
 }
 
+.pill-dot {
+    display: inline-block;
+    width: 0.65em;
+    height: 0.65em;
+    border-radius: 50%;
+    vertical-align: middle;
+}
+
 // Only grow pill buttons on when using a mobile
 @include media-breakpoint-down(sm) {
     .pill-container>label {
