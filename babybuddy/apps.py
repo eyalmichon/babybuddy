@@ -138,7 +138,11 @@ class BabyBuddyConfig(AppConfig):
     version = VERSION
     version_string = VERSION
 
+    SECRET_KEY_MIN_LENGTH = 20
+
     def ready(self):
+        self._check_secret_key()
+
         from django.core.signals import request_finished
 
         from dbsettings.signals import setting_changed
@@ -158,6 +162,21 @@ class BabyBuddyConfig(AppConfig):
                 zeroconf_service.start_in_background()
             except Exception as exc:
                 logger.warning("Failed to start Zeroconf service: %s", exc)
+
+    def _check_secret_key(self):
+        """Refuse to start in production with a short or missing SECRET_KEY."""
+        if settings.DEBUG:
+            return
+        key = settings.SECRET_KEY
+        if not key or len(key) < self.SECRET_KEY_MIN_LENGTH:
+            from django.core.exceptions import ImproperlyConfigured
+
+            raise ImproperlyConfigured(
+                "SECRET_KEY is missing or shorter than %d characters. "
+                "Set the SECRET_KEY environment variable to a unique, "
+                "unpredictable value before running with DEBUG=False."
+                % self.SECRET_KEY_MIN_LENGTH
+            )
 
     @staticmethod
     def _is_serving():

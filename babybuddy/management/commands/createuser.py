@@ -119,14 +119,14 @@ class Command(BaseCommand):
             user.is_staff = options.get("is_staff")
 
             if is_read_only:
-                user.is_superuser = False
                 user.save()
                 group = models.Group.objects.get(
                     name=settings.BABY_BUDDY["READ_ONLY_GROUP_NAME"]
                 )
                 user.groups.add(group)
             else:
-                user.is_superuser = True
+                default_group, _ = models.Group.objects.get_or_create(name="default")
+                user.groups.add(default_group)
                 user.save()
 
             if options.get("verbosity") > 0:

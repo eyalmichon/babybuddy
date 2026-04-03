@@ -17,3 +17,5 @@ class Command(migrate.Command):
             default_user.is_superuser = True
             default_user.is_staff = True
             default_user.save()
+            default_user.settings.force_password_change = True
+            default_user.settings.save()

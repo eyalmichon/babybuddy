@@ -1,6 +1,6 @@
-from .base import *
+from .base import *  # noqa: F403
 
-SECRET_KEY = "TESTS"
+SECRET_KEY = "TESTS-insecure-key-for-ci-only"
 
 # Password hasher configuration
 # See https://docs.djangoproject.com/en/5.0/ref/settings/#password-hashers

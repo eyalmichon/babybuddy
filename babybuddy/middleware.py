@@ -1,7 +1,6 @@
 import logging
 from os import getenv
 from time import time
-from functools import wraps
 
 from urllib.parse import urlunsplit, urlsplit
 
@@ -64,6 +63,33 @@ class UserTimezoneMiddleware:
                 timezone.activate(user.settings.timezone)
             except ValueError:
                 pass
+        return self.get_response(request)
+
+
+class ForcePasswordChangeMiddleware:
+    """
+    Redirects authenticated users to the password change page when their
+    ``Settings.force_password_change`` flag is ``True``.  This is set for the
+    auto-created default admin account so the operator must choose a real
+    password on first login.
+    """
+
+    ALLOWED_PATHS = frozenset(["/user/password/", "/logout/", "/login/"])
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if (
+            request.user.is_authenticated
+            and hasattr(request.user, "settings")
+            and request.user.settings.force_password_change
+            and request.path not in self.ALLOWED_PATHS
+            and not request.path.startswith("/static/")
+        ):
+            from django.urls import reverse
+
+            return HttpResponseRedirect(reverse("babybuddy:user-password"))
         return self.get_response(request)
 
 

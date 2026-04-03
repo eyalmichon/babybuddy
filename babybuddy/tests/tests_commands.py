@@ -39,9 +39,10 @@ class CommandsTestCase(TransactionTestCase):
         )
         user = get_user_model().objects.get(username="regularuser")
         self.assertIsInstance(user, get_user_model())
-        self.assertTrue(user.is_superuser)
+        self.assertFalse(user.is_superuser)
         self.assertFalse(user.is_staff)
         self.assertEqual(user.email, "regularuser@test.test")
+        self.assertTrue(user.groups.filter(name="default").exists())
 
         call_command(
             "createuser",
@@ -53,8 +54,9 @@ class CommandsTestCase(TransactionTestCase):
         )
         user = get_user_model().objects.get(username="staffuser")
         self.assertIsInstance(user, get_user_model())
-        self.assertTrue(user.is_superuser)
+        self.assertFalse(user.is_superuser)
         self.assertTrue(user.is_staff)
+        self.assertTrue(user.groups.filter(name="default").exists())
 
         call_command(
             "createuser",

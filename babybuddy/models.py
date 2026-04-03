@@ -129,6 +129,11 @@ class Settings(models.Model):
         default=25,
         verbose_name=_("Items Per Page"),
     )
+    force_password_change = models.BooleanField(
+        default=False,
+        verbose_name=_("Force password change"),
+        editable=False,
+    )
 
     def __str__(self):
         return str(format_lazy(_("{user}'s Settings"), user=self.user))

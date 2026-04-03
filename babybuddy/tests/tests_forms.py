@@ -4,7 +4,7 @@ import datetime
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
-from django.test import Client as HttpClient, override_settings, TestCase
+from django.test import Client as HttpClient, TestCase
 from django.utils import timezone
 
 from faker import Faker
@@ -118,13 +118,14 @@ class FormsTestCase(TestCase):
         self.assertEqual(page.status_code, 302)
         user = get_user_model().objects.get(username="username")
         self.assertIsInstance(user, get_user_model())
-        self.assertTrue(user.is_superuser)
+        self.assertFalse(user.is_superuser)
         self.assertFalse(user.is_staff)
         self.assertFalse(
             user.groups.filter(
                 name=settings.BABY_BUDDY["READ_ONLY_GROUP_NAME"]
             ).exists()
         )
+        self.assertTrue(user.groups.filter(name="default").exists())
 
     def test_add_staff_user(self):
         self.user.is_staff = True
@@ -138,13 +139,14 @@ class FormsTestCase(TestCase):
         self.assertEqual(page.status_code, 302)
         user = get_user_model().objects.get(username="username")
         self.assertIsInstance(user, get_user_model())
-        self.assertTrue(user.is_superuser)
+        self.assertFalse(user.is_superuser)
         self.assertTrue(user.is_staff)
         self.assertFalse(
             user.groups.filter(
                 name=settings.BABY_BUDDY["READ_ONLY_GROUP_NAME"]
             ).exists()
         )
+        self.assertTrue(user.groups.filter(name="default").exists())
 
     def test_add_read_only_user(self):
         self.user.is_staff = True

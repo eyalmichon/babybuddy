@@ -43,19 +43,20 @@ class BabyBuddyUserForm(forms.ModelForm):
     def save(self, commit=True):
         user = super(BabyBuddyUserForm, self).save(commit=False)
         is_read_only = self.cleaned_data["is_read_only"]
-        if is_read_only:
-            user.is_superuser = False
-        else:
-            user.is_superuser = True
         if commit:
             user.save()
         readonly_group = Group.objects.get(
             name=settings.BABY_BUDDY["READ_ONLY_GROUP_NAME"]
         )
+        default_group, _ = Group.objects.get_or_create(name="default")
         if is_read_only:
-            user.groups.add(readonly_group.id)
+            user.is_superuser = False
+            user.save()
+            user.groups.add(readonly_group)
+            user.groups.remove(default_group)
         else:
-            user.groups.remove(readonly_group.id)
+            user.groups.remove(readonly_group)
+            user.groups.add(default_group)
         return user
 
 

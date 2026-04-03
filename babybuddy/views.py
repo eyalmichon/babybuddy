@@ -242,6 +242,9 @@ class UserPassword(LoginRequiredMixin, View):
         if form.is_valid():
             user = form.save()
             update_session_auth_hash(request, user)
+            if user.settings.force_password_change:
+                user.settings.force_password_change = False
+                user.settings.save()
             messages.success(request, _("Password updated."))
         return render(request, self.template_name, {"form": form})
 

@@ -34,6 +34,7 @@ ALLOWED_HOSTS = config.allowed_hosts_list
 SECRET_KEY = config.secret_key or None
 DEBUG = config.debug
 
+
 # Default port — single source of truth for runserver, gunicorn, Zeroconf, etc.
 BB_PORT = config.bb_port
 
@@ -78,6 +79,7 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "babybuddy.middleware.RollingSessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "babybuddy.middleware.ForcePasswordChangeMiddleware",
     "babybuddy.middleware.UserTimezoneMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "babybuddy.middleware.UserLanguageMiddleware",
