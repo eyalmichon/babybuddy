@@ -1193,7 +1193,16 @@ class TestHADiscoveryView(APITestCase):
         feeding = next(s for s in services if s["key"] == "add_feeding")
         self.assertTrue(feeding["uses_timer"])
         self.assertTrue(feeding["common_fields"])
+        self.assertIn("child", feeding["fields"])
+        self.assertIn("timer", feeding["fields"])
+        self.assertIn("start", feeding["fields"])
+        self.assertIn("end", feeding["fields"])
         self.assertIn("type", feeding["fields"])
+        self.assertIn("tags", feeding["fields"])
+        self.assertEqual(feeding["fields"]["child"]["type"], "child_entity")
+        self.assertEqual(feeding["fields"]["timer"]["type"], "timer")
+        self.assertEqual(feeding["fields"]["start"]["type"], "datetime")
+        self.assertEqual(feeding["fields"]["end"]["type"], "datetime")
         self.assertEqual(feeding["fields"]["type"]["select_key"], "feeding_type")
         self.assertIn("transforms", feeding)
         self.assertEqual(feeding["transforms"]["type"], "lowercase")
@@ -1248,6 +1257,9 @@ class TestHADiscoveryView(APITestCase):
         """String fields for notes/milestone should have multiline: True."""
         response = self.client.get(self.endpoint)
         services = response.data["services"]
+        bmi = next(s for s in services if s["key"] == "add_bmi")
+        self.assertTrue(bmi["fields"]["notes"]["multiline"])
+
         feeding = next(s for s in services if s["key"] == "add_feeding")
         self.assertTrue(feeding["fields"]["notes"]["multiline"])
 
@@ -1262,17 +1274,11 @@ class TestHADiscoveryView(APITestCase):
         self.assertNotIn("multiline", child_svc["fields"]["first_name"])
 
     def test_field_entity_domain(self):
-        """entity_id fields should specify entity_domain."""
+        """entity_id fields should specify entity_domain when present."""
         response = self.client.get(self.endpoint)
         services = response.data["services"]
         delete = next(s for s in services if s["key"] == "delete_last_entry")
         self.assertEqual(delete["fields"]["entity_id"]["entity_domain"], "sensor")
-
-        start_timer = next(s for s in services if s["key"] == "start_timer")
-        self.assertEqual(start_timer["fields"]["child"]["entity_domain"], "switch")
-
-        give_med = next(s for s in services if s["key"] == "give_medication")
-        self.assertEqual(give_med["fields"]["child"]["entity_domain"], "sensor")
 
     def test_field_order_keys(self):
         """Every service field should have an integer order key."""
@@ -1292,10 +1298,15 @@ class TestHADiscoveryView(APITestCase):
 
         services = response.data["services"]
         feeding = next(s for s in services if s["key"] == "add_feeding")
+        self.assertEqual(feeding["fields"]["child"]["order"], 0)
+        self.assertEqual(feeding["fields"]["timer"]["order"], 1)
+        self.assertEqual(feeding["fields"]["start"]["order"], 2)
+        self.assertEqual(feeding["fields"]["end"]["order"], 3)
         self.assertEqual(feeding["fields"]["type"]["order"], 10)
         self.assertEqual(feeding["fields"]["method"]["order"], 20)
         self.assertEqual(feeding["fields"]["amount"]["order"], 30)
         self.assertEqual(feeding["fields"]["notes"]["order"], 90)
+        self.assertEqual(feeding["fields"]["tags"]["order"], 95)
 
     def test_field_default_hints(self):
         """Date fields should default to 'today', datetime fields to 'now'."""
@@ -1312,6 +1323,10 @@ class TestHADiscoveryView(APITestCase):
             "add_note": {"time": "now"},
             "add_temperature": {"time": "now"},
             "add_medication": {"time": "now"},
+            "add_feeding": {"start": "now"},
+            "add_pumping": {"start": "now"},
+            "add_sleep": {"start": "now"},
+            "add_tummy_time": {"start": "now"},
             "start_timer": {"start": "now"},
         }
 
@@ -1328,7 +1343,10 @@ class TestHADiscoveryView(APITestCase):
             ("add_child", "first_name"),
             ("add_feeding", "amount"),
             ("add_feeding", "type"),
+            ("add_feeding", "timer"),
+            ("add_feeding", "end"),
             ("add_bmi", "bmi"),
+            ("add_bmi", "child"),
             ("delete_last_entry", "entity_id"),
             ("give_medication", "schedule_id"),
         ]
@@ -1339,6 +1357,74 @@ class TestHADiscoveryView(APITestCase):
                 svc["fields"][field_key],
                 f"{svc_key}.{field_key} should NOT have a default",
             )
+
+    def test_structural_child_fields(self):
+        response = self.client.get(self.endpoint)
+        services = response.data["services"]
+
+        for svc in services:
+            if svc["key"] in {"add_child", "delete_last_entry"}:
+                self.assertNotIn("child", svc["fields"])
+                continue
+
+            child = svc["fields"]["child"]
+            self.assertEqual(child["type"], "child_entity")
+            self.assertTrue(child["hidden_in_card"])
+            self.assertEqual(child["order"], 0)
+
+    def test_structural_timer_fields(self):
+        response = self.client.get(self.endpoint)
+        services = response.data["services"]
+        timer_services = [svc for svc in services if svc["uses_timer"]]
+        self.assertEqual(len(timer_services), 4)
+
+        for svc in timer_services:
+            timer = svc["fields"]["timer"]
+            start = svc["fields"]["start"]
+            end = svc["fields"]["end"]
+
+            self.assertEqual(timer["type"], "timer")
+            self.assertTrue(timer["hidden_in_card"])
+            self.assertEqual(timer["exclusion_group"], "timer_or_start")
+            self.assertIn("selector_hints", timer)
+
+            self.assertEqual(start["type"], "datetime")
+            self.assertEqual(start["default"], "now")
+            self.assertEqual(start["exclusion_group"], "timer_or_start")
+
+            self.assertEqual(end["type"], "datetime")
+            self.assertNotIn("default", end)
+            self.assertNotIn("exclusion_group", end)
+
+        bmi = next(s for s in services if s["key"] == "add_bmi")
+        self.assertNotIn("timer", bmi["fields"])
+
+    def test_structural_notes_and_tags(self):
+        response = self.client.get(self.endpoint)
+        services = response.data["services"]
+        common_services = [svc for svc in services if svc["common_fields"]]
+        self.assertEqual(len(common_services), 11)
+
+        for svc in common_services:
+            tags = svc["fields"]["tags"]
+            self.assertEqual(tags["type"], "string_list")
+            self.assertEqual(tags["order"], 95)
+
+        for svc in common_services:
+            if svc["key"] == "add_tummy_time":
+                self.assertNotIn("notes", svc["fields"])
+                continue
+            notes = svc["fields"]["notes"]
+            self.assertEqual(notes["type"], "string")
+            self.assertTrue(notes["multiline"])
+            self.assertEqual(notes["order"], 90)
+
+        add_child = next(s for s in services if s["key"] == "add_child")
+        delete = next(s for s in services if s["key"] == "delete_last_entry")
+        self.assertNotIn("notes", add_child["fields"])
+        self.assertNotIn("tags", add_child["fields"])
+        self.assertNotIn("notes", delete["fields"])
+        self.assertNotIn("tags", delete["fields"])
 
     def test_requires_auth(self):
         self.client.logout()

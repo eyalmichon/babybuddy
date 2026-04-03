@@ -259,6 +259,62 @@ def _get_choice_labels(model_class, field_name):
     return [str(label) for _value, label in field.choices]
 
 
+_CHILD_FIELD = {
+    "type": "child_entity",
+    "required": True,
+    "name": "Child",
+    "description": "Child to record this entry for",
+    "order": 0,
+    "hidden_in_card": True,
+}
+
+_TIMER_FIELD = {
+    "type": "timer",
+    "required": False,
+    "name": "Timer",
+    "description": "Running timer ID to consume",
+    "order": 1,
+    "hidden_in_card": True,
+    "selector_hints": {"mode": "box", "min": 1},
+    "exclusion_group": "timer_or_start",
+}
+
+_START_FIELD = {
+    "type": "datetime",
+    "required": False,
+    "default": "now",
+    "name": "Start Time",
+    "description": "Start time of the activity",
+    "order": 2,
+    "exclusion_group": "timer_or_start",
+}
+
+_END_FIELD = {
+    "type": "datetime",
+    "required": False,
+    "name": "End Time",
+    "description": "End time of the activity",
+    "order": 3,
+}
+
+_NOTES_FIELD = {
+    "type": "string",
+    "required": False,
+    "name": "Notes",
+    "description": "Additional notes",
+    "multiline": True,
+    "order": 90,
+}
+
+_TAGS_FIELD = {
+    "type": "string_list",
+    "required": False,
+    "name": "Tags",
+    "description": "Tags to associate with this entry",
+    "order": 95,
+}
+
+
 class HADiscoveryView(views.APIView):
     """Metadata endpoint consumed by the Home Assistant integration.
 
@@ -542,6 +598,7 @@ class HADiscoveryView(views.APIView):
             "uses_timer": False,
             "common_fields": True,
             "fields": {
+                "child": {**_CHILD_FIELD},
                 "bmi": {
                     "type": "float",
                     "required": True,
@@ -558,6 +615,8 @@ class HADiscoveryView(views.APIView):
                     "description": "Date of measurement",
                     "order": 20,
                 },
+                "notes": {**_NOTES_FIELD},
+                "tags": {**_TAGS_FIELD},
             },
         },
         {
@@ -568,6 +627,7 @@ class HADiscoveryView(views.APIView):
             "uses_timer": False,
             "common_fields": True,
             "fields": {
+                "child": {**_CHILD_FIELD},
                 "time": {
                     "type": "datetime",
                     "required": False,
@@ -600,6 +660,8 @@ class HADiscoveryView(views.APIView):
                     "selector_hints": {"min": 0.0, "max": 500.0, "step": 0.1},
                     "order": 40,
                 },
+                "notes": {**_NOTES_FIELD},
+                "tags": {**_TAGS_FIELD},
             },
             "transforms": {
                 "type": "diaper_type_to_booleans",
@@ -614,6 +676,10 @@ class HADiscoveryView(views.APIView):
             "uses_timer": True,
             "common_fields": True,
             "fields": {
+                "child": {**_CHILD_FIELD},
+                "timer": {**_TIMER_FIELD},
+                "start": {**_START_FIELD},
+                "end": {**_END_FIELD},
                 "type": {
                     "type": "select",
                     "select_key": "feeding_type",
@@ -638,14 +704,8 @@ class HADiscoveryView(views.APIView):
                     "selector_hints": {"min": 0.0, "max": 500.0, "step": 0.1},
                     "order": 30,
                 },
-                "notes": {
-                    "type": "string",
-                    "required": False,
-                    "name": "Notes",
-                    "description": "Additional notes",
-                    "multiline": True,
-                    "order": 90,
-                },
+                "notes": {**_NOTES_FIELD},
+                "tags": {**_TAGS_FIELD},
             },
             "transforms": {
                 "type": "lowercase",
@@ -660,6 +720,7 @@ class HADiscoveryView(views.APIView):
             "uses_timer": False,
             "common_fields": True,
             "fields": {
+                "child": {**_CHILD_FIELD},
                 "head_circumference": {
                     "type": "float",
                     "required": True,
@@ -676,6 +737,8 @@ class HADiscoveryView(views.APIView):
                     "description": "Date of measurement",
                     "order": 20,
                 },
+                "notes": {**_NOTES_FIELD},
+                "tags": {**_TAGS_FIELD},
             },
         },
         {
@@ -686,6 +749,7 @@ class HADiscoveryView(views.APIView):
             "uses_timer": False,
             "common_fields": True,
             "fields": {
+                "child": {**_CHILD_FIELD},
                 "height": {
                     "type": "float",
                     "required": True,
@@ -702,6 +766,8 @@ class HADiscoveryView(views.APIView):
                     "description": "Date of measurement",
                     "order": 20,
                 },
+                "notes": {**_NOTES_FIELD},
+                "tags": {**_TAGS_FIELD},
             },
         },
         {
@@ -713,12 +779,12 @@ class HADiscoveryView(views.APIView):
             "common_fields": False,
             "fields": {
                 "child": {
-                    "type": "entity_id",
+                    "type": "child_entity",
                     "required": True,
                     "name": "Child",
                     "description": "Child to add the note for",
-                    "entity_domain": "sensor",
-                    "order": 5,
+                    "hidden_in_card": True,
+                    "order": 0,
                 },
                 "note": {
                     "type": "string",
@@ -741,7 +807,7 @@ class HADiscoveryView(views.APIView):
                     "required": False,
                     "name": "Tags",
                     "description": "Tags to associate with the note",
-                    "order": 90,
+                    "order": 95,
                 },
             },
         },
@@ -753,6 +819,10 @@ class HADiscoveryView(views.APIView):
             "uses_timer": True,
             "common_fields": True,
             "fields": {
+                "child": {**_CHILD_FIELD},
+                "timer": {**_TIMER_FIELD},
+                "start": {**_START_FIELD},
+                "end": {**_END_FIELD},
                 "amount": {
                     "type": "float",
                     "required": False,
@@ -761,14 +831,8 @@ class HADiscoveryView(views.APIView):
                     "selector_hints": {"min": 0.0, "max": 500.0, "step": 0.1},
                     "order": 10,
                 },
-                "notes": {
-                    "type": "string",
-                    "required": False,
-                    "name": "Notes",
-                    "description": "Additional notes",
-                    "multiline": True,
-                    "order": 90,
-                },
+                "notes": {**_NOTES_FIELD},
+                "tags": {**_TAGS_FIELD},
             },
         },
         {
@@ -779,6 +843,10 @@ class HADiscoveryView(views.APIView):
             "uses_timer": True,
             "common_fields": True,
             "fields": {
+                "child": {**_CHILD_FIELD},
+                "timer": {**_TIMER_FIELD},
+                "start": {**_START_FIELD},
+                "end": {**_END_FIELD},
                 "nap": {
                     "type": "boolean",
                     "required": False,
@@ -786,14 +854,8 @@ class HADiscoveryView(views.APIView):
                     "description": "Was this a nap (not overnight sleep)?",
                     "order": 10,
                 },
-                "notes": {
-                    "type": "string",
-                    "required": False,
-                    "name": "Notes",
-                    "description": "Additional notes",
-                    "multiline": True,
-                    "order": 90,
-                },
+                "notes": {**_NOTES_FIELD},
+                "tags": {**_TAGS_FIELD},
             },
         },
         {
@@ -804,6 +866,7 @@ class HADiscoveryView(views.APIView):
             "uses_timer": False,
             "common_fields": True,
             "fields": {
+                "child": {**_CHILD_FIELD},
                 "temperature": {
                     "type": "float",
                     "required": True,
@@ -820,6 +883,8 @@ class HADiscoveryView(views.APIView):
                     "description": "Date and time of the reading",
                     "order": 20,
                 },
+                "notes": {**_NOTES_FIELD},
+                "tags": {**_TAGS_FIELD},
             },
         },
         {
@@ -830,6 +895,10 @@ class HADiscoveryView(views.APIView):
             "uses_timer": True,
             "common_fields": True,
             "fields": {
+                "child": {**_CHILD_FIELD},
+                "timer": {**_TIMER_FIELD},
+                "start": {**_START_FIELD},
+                "end": {**_END_FIELD},
                 "milestone": {
                     "type": "string",
                     "required": False,
@@ -838,6 +907,7 @@ class HADiscoveryView(views.APIView):
                     "multiline": True,
                     "order": 10,
                 },
+                "tags": {**_TAGS_FIELD},
             },
         },
         {
@@ -848,6 +918,7 @@ class HADiscoveryView(views.APIView):
             "uses_timer": False,
             "common_fields": True,
             "fields": {
+                "child": {**_CHILD_FIELD},
                 "weight": {
                     "type": "float",
                     "required": True,
@@ -864,6 +935,8 @@ class HADiscoveryView(views.APIView):
                     "description": "Date of measurement",
                     "order": 20,
                 },
+                "notes": {**_NOTES_FIELD},
+                "tags": {**_TAGS_FIELD},
             },
         },
         {
@@ -874,6 +947,7 @@ class HADiscoveryView(views.APIView):
             "uses_timer": False,
             "common_fields": True,
             "fields": {
+                "child": {**_CHILD_FIELD},
                 "name": {
                     "type": "string",
                     "required": True,
@@ -905,6 +979,8 @@ class HADiscoveryView(views.APIView):
                     "description": "Date and time the medication was given",
                     "order": 40,
                 },
+                "notes": {**_NOTES_FIELD},
+                "tags": {**_TAGS_FIELD},
             },
         },
         {
@@ -916,12 +992,12 @@ class HADiscoveryView(views.APIView):
             "common_fields": False,
             "fields": {
                 "child": {
-                    "type": "entity_id",
+                    "type": "child_entity",
                     "required": True,
                     "name": "Child",
                     "description": "Child to give medication to",
-                    "entity_domain": "sensor",
-                    "order": 5,
+                    "hidden_in_card": True,
+                    "order": 0,
                 },
                 "schedule_id": {
                     "type": "int",
@@ -987,12 +1063,12 @@ class HADiscoveryView(views.APIView):
             "common_fields": False,
             "fields": {
                 "child": {
-                    "type": "entity_id",
+                    "type": "child_entity",
                     "required": True,
                     "name": "Child",
                     "description": "Child to start the timer for",
-                    "entity_domain": "switch",
-                    "order": 5,
+                    "hidden_in_card": True,
+                    "order": 0,
                 },
                 "start": {
                     "type": "datetime",
