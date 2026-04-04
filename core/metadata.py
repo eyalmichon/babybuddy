@@ -15,8 +15,8 @@ from django.utils.translation import gettext_lazy as _
 # (e.g. "diaperchange", "feeding") so that `icon-{{ type }}` still
 # resolves the correct Fontello web icon without a Python lookup.
 #
-# `color`   – hex colour used for both the dashboard card chrome
-#             and the HA entity colour.  None = no dashboard card.
+# `color`   – hex colour used for the dashboard card chrome (activity
+#             types with cards) and the HA entity colour.
 # `mdi_icon` – Material Design Icons string for Home Assistant.
 
 ACTIVITY_TYPES = {
@@ -32,7 +32,7 @@ ACTIVITY_TYPES = {
     },
     "pumping": {
         "label": _("Pumping"),
-        "color": "#37abe9",
+        "color": "#0288D1",
         "mdi_icon": "mdi:water-pump",
     },
     "sleep": {
@@ -52,37 +52,37 @@ ACTIVITY_TYPES = {
     },
     "timer": {
         "label": _("Timer"),
-        "color": None,
+        "color": "#78909C",
         "mdi_icon": "mdi:timer-outline",
     },
     "bmi": {
         "label": _("BMI"),
-        "color": None,
+        "color": "#5C6BC0",
         "mdi_icon": "mdi:human",
     },
     "head_circumference": {
         "label": _("Head Circumference"),
-        "color": None,
+        "color": "#26A69A",
         "mdi_icon": "mdi:tape-measure",
     },
     "height": {
         "label": _("Height"),
-        "color": None,
+        "color": "#66BB6A",
         "mdi_icon": "mdi:human-male-height",
     },
     "temperature": {
         "label": _("Temperature"),
-        "color": None,
+        "color": "#EF5350",
         "mdi_icon": "mdi:thermometer",
     },
     "weight": {
         "label": _("Weight"),
-        "color": None,
+        "color": "#8D6E63",
         "mdi_icon": "mdi:scale-bathroom",
     },
     "note": {
         "label": _("Note"),
-        "color": None,
+        "color": "#9E9E9E",
         "mdi_icon": "mdi:note-text",
     },
 }
