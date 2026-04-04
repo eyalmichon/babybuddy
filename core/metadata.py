@@ -94,6 +94,7 @@ ACTIVITY_TYPES = {
 # key (e.g. "diaperchange").  This dict bridges the two.
 
 SENSOR_KEY_TO_ACTIVITY = {
+    # main sensors
     "changes": "diaperchange",
     "feedings": "feeding",
     "pumping": "pumping",
@@ -107,6 +108,15 @@ SENSOR_KEY_TO_ACTIVITY = {
     "temperature": "temperature",
     "weight": "weight",
     "notes": "note",
+    # stats sensors
+    "feedings_today": "feeding",
+    "diaper_changes_today": "diaperchange",
+    "sleep_total_today_minutes": "sleep",
+    "medications_overdue_count": "medication",
+    "last_feeding_minutes_ago": "feeding",
+    "last_diaper_change_minutes_ago": "diaperchange",
+    # binary sensors
+    "medication_overdue": "medication",
 }
 
 

@@ -1508,21 +1508,24 @@ class TestHADiscoveryView(APITestCase):
         from core.metadata import ACTIVITY_TYPES, SENSOR_KEY_TO_ACTIVITY
 
         response = self.client.get(self.endpoint)
-        sensors = {s["key"]: s for s in response.data["sensors"]}
+        all_sensors = {}
+        for section in ("sensors", "stats_sensors", "binary_sensors"):
+            for s in response.data[section]:
+                all_sensors[s["key"]] = s
         for sensor_key, activity_key in SENSOR_KEY_TO_ACTIVITY.items():
-            if sensor_key not in sensors:
+            if sensor_key not in all_sensors:
                 continue
             expected_color = ACTIVITY_TYPES[activity_key]["color"]
             if expected_color:
                 self.assertEqual(
-                    sensors[sensor_key].get("color"),
+                    all_sensors[sensor_key].get("color"),
                     expected_color,
                     f"Sensor '{sensor_key}' color mismatch",
                 )
             else:
                 self.assertNotIn(
                     "color",
-                    sensors[sensor_key],
+                    all_sensors[sensor_key],
                     f"Sensor '{sensor_key}' should have no color",
                 )
 
