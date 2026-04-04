@@ -63,7 +63,9 @@ class UserTimezoneMiddleware:
                 timezone.activate(user.settings.timezone)
             except ValueError:
                 pass
-        return self.get_response(request)
+        response = self.get_response(request)
+        timezone.deactivate()
+        return response
 
 
 class ForcePasswordChangeMiddleware:

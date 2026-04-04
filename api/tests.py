@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import datetime
+from unittest.mock import patch
+
 from babybuddy.models import get_user_model
 from core import models
 from core.choices import (
@@ -11,6 +14,7 @@ from core.choices import (
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 
@@ -1523,3 +1527,43 @@ class TestHASettingsView(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class TestTimezoneActivation(APITestCase):
+    """Verify that the user's timezone is activated for token-authenticated API
+    requests so that date/time validation uses the correct local date."""
+
+    fixtures = ["tests.json"]
+    endpoint = reverse("api:height-list")
+
+    def setUp(self):
+        self.user = get_user_model().objects.get(username="admin")
+        self.user.settings.timezone = "Asia/Jerusalem"
+        self.user.settings.save()
+        self.token = Token.objects.get_or_create(user=self.user)[0]
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token.key)
+
+    def test_token_auth_uses_user_timezone(self):
+        """A date that is 'today' in Asia/Jerusalem but 'tomorrow' in UTC
+        must be accepted, proving the validator runs under the user's timezone."""
+        fake_now = datetime.datetime(2026, 4, 4, 0, 30, tzinfo=datetime.timezone.utc)
+        with patch("django.utils.timezone.now", return_value=fake_now):
+            response = self.client.post(
+                self.endpoint,
+                {"child": 1, "height": "80.0", "date": "2026-04-04"},
+                format="json",
+            )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_future_date_still_rejected(self):
+        """A date genuinely in the future (even in the user's timezone) must
+        still be rejected."""
+        fake_now = datetime.datetime(2026, 4, 4, 0, 30, tzinfo=datetime.timezone.utc)
+        with patch("django.utils.timezone.now", return_value=fake_now):
+            response = self.client.post(
+                self.endpoint,
+                {"child": 1, "height": "80.0", "date": "2026-04-05"},
+                format="json",
+            )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("date", response.data)

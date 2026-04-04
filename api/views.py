@@ -2,7 +2,6 @@
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from rest_framework import viewsets, views
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -20,9 +19,10 @@ from babybuddy import models as babybuddy_models
 from mqtt.stats import compute_stats
 
 from . import serializers, filters
+from .base import BabyBuddyAPIView, BabyBuddyModelViewSet
 
 
-class BMIViewSet(viewsets.ModelViewSet):
+class BMIViewSet(BabyBuddyModelViewSet):
     queryset = models.BMI.objects.all()
     serializer_class = serializers.BMISerializer
     filterset_fields = ("child", "date")
@@ -61,7 +61,7 @@ LAST_ACTIVITY_MODELS = [
 ]
 
 
-class ChildViewSet(viewsets.ModelViewSet):
+class ChildViewSet(BabyBuddyModelViewSet):
     queryset = models.Child.objects.all()
     serializer_class = serializers.ChildSerializer
     lookup_field = "slug"
@@ -100,7 +100,7 @@ class ChildViewSet(viewsets.ModelViewSet):
         return Response(data)
 
 
-class ExpirableViewSet(viewsets.ModelViewSet):
+class ExpirableViewSet(BabyBuddyModelViewSet):
     queryset = models.Expirable.objects.all()
     serializer_class = serializers.ExpirableSerializer
     filterset_class = filters.ExpirableFilter
@@ -117,7 +117,7 @@ class ExpirableViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(instance).data)
 
 
-class DiaperChangeViewSet(viewsets.ModelViewSet):
+class DiaperChangeViewSet(BabyBuddyModelViewSet):
     queryset = models.DiaperChange.objects.all()
     serializer_class = serializers.DiaperChangeSerializer
     filterset_class = filters.DiaperChangeFilter
@@ -125,7 +125,7 @@ class DiaperChangeViewSet(viewsets.ModelViewSet):
     ordering = "-time"
 
 
-class FeedingViewSet(viewsets.ModelViewSet):
+class FeedingViewSet(BabyBuddyModelViewSet):
     queryset = models.Feeding.objects.all()
     serializer_class = serializers.FeedingSerializer
     filterset_class = filters.FeedingFilter
@@ -133,7 +133,7 @@ class FeedingViewSet(viewsets.ModelViewSet):
     ordering = "-end"
 
 
-class HeadCircumferenceViewSet(viewsets.ModelViewSet):
+class HeadCircumferenceViewSet(BabyBuddyModelViewSet):
     queryset = models.HeadCircumference.objects.all()
     serializer_class = serializers.HeadCircumferenceSerializer
     filterset_fields = ("child", "date")
@@ -141,7 +141,7 @@ class HeadCircumferenceViewSet(viewsets.ModelViewSet):
     ordering = "-date"
 
 
-class HeightViewSet(viewsets.ModelViewSet):
+class HeightViewSet(BabyBuddyModelViewSet):
     queryset = models.Height.objects.all()
     serializer_class = serializers.HeightSerializer
     filterset_fields = ("child", "date")
@@ -149,7 +149,7 @@ class HeightViewSet(viewsets.ModelViewSet):
     ordering = "-date"
 
 
-class NoteViewSet(viewsets.ModelViewSet):
+class NoteViewSet(BabyBuddyModelViewSet):
     queryset = models.Note.objects.all()
     serializer_class = serializers.NoteSerializer
     filterset_class = filters.NoteFilter
@@ -157,7 +157,7 @@ class NoteViewSet(viewsets.ModelViewSet):
     ordering = "-time"
 
 
-class PumpingViewSet(viewsets.ModelViewSet):
+class PumpingViewSet(BabyBuddyModelViewSet):
     queryset = models.Pumping.objects.all()
     serializer_class = serializers.PumpingSerializer
     filterset_class = filters.PumpingFilter
@@ -165,7 +165,7 @@ class PumpingViewSet(viewsets.ModelViewSet):
     ordering = "-end"
 
 
-class SleepViewSet(viewsets.ModelViewSet):
+class SleepViewSet(BabyBuddyModelViewSet):
     queryset = models.Sleep.objects.all()
     serializer_class = serializers.SleepSerializer
     filterset_class = filters.SleepFilter
@@ -173,7 +173,7 @@ class SleepViewSet(viewsets.ModelViewSet):
     ordering = "-end"
 
 
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(BabyBuddyModelViewSet):
     queryset = models.Tag.objects.all()
     serializer_class = serializers.TagSerializer
     lookup_field = "slug"
@@ -182,7 +182,7 @@ class TagViewSet(viewsets.ModelViewSet):
     ordering = "name"
 
 
-class MedicationViewSet(viewsets.ModelViewSet):
+class MedicationViewSet(BabyBuddyModelViewSet):
     queryset = models.Medication.objects.all()
     serializer_class = serializers.MedicationSerializer
     filterset_class = filters.MedicationFilter
@@ -190,7 +190,7 @@ class MedicationViewSet(viewsets.ModelViewSet):
     ordering = "-time"
 
 
-class MedicationScheduleViewSet(viewsets.ModelViewSet):
+class MedicationScheduleViewSet(BabyBuddyModelViewSet):
     queryset = models.MedicationSchedule.objects.all()
     serializer_class = serializers.MedicationScheduleSerializer
     filterset_fields = ("child", "active", "frequency")
@@ -198,7 +198,7 @@ class MedicationScheduleViewSet(viewsets.ModelViewSet):
     ordering = "name"
 
 
-class TemperatureViewSet(viewsets.ModelViewSet):
+class TemperatureViewSet(BabyBuddyModelViewSet):
     queryset = models.Temperature.objects.all()
     serializer_class = serializers.TemperatureSerializer
     filterset_class = filters.TemperatureFilter
@@ -206,7 +206,7 @@ class TemperatureViewSet(viewsets.ModelViewSet):
     ordering = "-time"
 
 
-class TimerViewSet(viewsets.ModelViewSet):
+class TimerViewSet(BabyBuddyModelViewSet):
     queryset = models.Timer.objects.all()
     serializer_class = serializers.TimerSerializer
     filterset_class = filters.TimerFilter
@@ -220,7 +220,7 @@ class TimerViewSet(viewsets.ModelViewSet):
         return Response(self.serializer_class(timer).data)
 
 
-class TummyTimeViewSet(viewsets.ModelViewSet):
+class TummyTimeViewSet(BabyBuddyModelViewSet):
     queryset = models.TummyTime.objects.all()
     serializer_class = serializers.TummyTimeSerializer
     filterset_class = filters.TummyTimeFilter
@@ -228,7 +228,7 @@ class TummyTimeViewSet(viewsets.ModelViewSet):
     ordering = "-start"
 
 
-class WeightViewSet(viewsets.ModelViewSet):
+class WeightViewSet(BabyBuddyModelViewSet):
     queryset = models.Weight.objects.all()
     serializer_class = serializers.WeightSerializer
     filterset_fields = ("child", "date")
@@ -236,7 +236,7 @@ class WeightViewSet(viewsets.ModelViewSet):
     ordering = "-date"
 
 
-class ProfileView(views.APIView):
+class ProfileView(BabyBuddyAPIView):
     schema = AutoSchema(operation_id_base="CurrentProfile")
 
     action = "get"
@@ -316,7 +316,7 @@ _TAGS_FIELD = {
 }
 
 
-class HADiscoveryView(views.APIView):
+class HADiscoveryView(BabyBuddyAPIView):
     """Metadata endpoint consumed by the Home Assistant integration.
 
     Returns a JSON object describing all entities, MQTT topics, and select
@@ -1157,7 +1157,7 @@ class HADiscoveryView(views.APIView):
         return Response(data)
 
 
-class HASettingsView(views.APIView):
+class HASettingsView(BabyBuddyAPIView):
     """Read and update Home Assistant-related settings."""
 
     schema = AutoSchema(operation_id_base="HASettings")
@@ -1188,7 +1188,7 @@ class HASettingsView(views.APIView):
         return Response(self._get_settings())
 
 
-class MQTTDiscoverView(views.APIView):
+class MQTTDiscoverView(BabyBuddyAPIView):
     """Scan the network for reachable MQTT brokers via mDNS and well-known
     hostnames. Returns a JSON list of discovered brokers."""
 
