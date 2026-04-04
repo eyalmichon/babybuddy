@@ -496,20 +496,6 @@ class HADiscoveryView(BabyBuddyAPIView):
             "icon": "mdi:sleep",
         },
         {
-            "key": "last_feeding_minutes_ago",
-            "name": "Minutes Since Last Feeding",
-            "stats_field": "last_feeding_minutes_ago",
-            "unit_of_measurement": "min",
-            "icon": "mdi:clock-outline",
-        },
-        {
-            "key": "last_diaper_change_minutes_ago",
-            "name": "Minutes Since Last Diaper Change",
-            "stats_field": "last_diaper_change_minutes_ago",
-            "unit_of_measurement": "min",
-            "icon": "mdi:clock-outline",
-        },
-        {
             "key": "medications_overdue_count",
             "name": "Medications Overdue",
             "stats_field": "medications_overdue_count",

@@ -113,8 +113,6 @@ SENSOR_KEY_TO_ACTIVITY = {
     "diaper_changes_today": "diaperchange",
     "sleep_total_today_minutes": "sleep",
     "medications_overdue_count": "medication",
-    "last_feeding_minutes_ago": "feeding",
-    "last_diaper_change_minutes_ago": "diaperchange",
     # binary sensors
     "medication_overdue": "medication",
 }
@@ -150,18 +148,10 @@ SENSOR_GROUPS = [
         "color": "#8E24AA",
     },
     {
-        "id": "since",
-        "title": "Time Since",
-        "icon": "mdi:timer-sand",
-        "order": 4,
-        "default_collapsed": True,
-        "color": "#FB8C00",
-    },
-    {
         "id": "status",
         "title": "Status",
         "icon": "mdi:alert-circle-outline",
-        "order": 5,
+        "order": 4,
         "default_collapsed": False,
         "color": "#E53935",
     },
@@ -194,9 +184,6 @@ SENSOR_GROUP_MAP = {
     "height": "measurements",
     "temperature": "measurements",
     "weight": "measurements",
-    # since
-    "last_feeding_minutes_ago": "since",
-    "last_diaper_change_minutes_ago": "since",
     # status
     "medication_overdue": "status",
 }
