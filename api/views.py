@@ -316,6 +316,26 @@ _TAGS_FIELD = {
 }
 
 
+SENSOR_UNITS = {
+    "metric": {
+        "temperature": "°C",
+        "weight": "kg",
+        "height": "cm",
+        "head-circumference": "cm",
+        "pumping": "mL",
+        "bmi": "kg/m²",
+    },
+    "imperial": {
+        "temperature": "°F",
+        "weight": "lb",
+        "height": "in",
+        "head-circumference": "in",
+        "pumping": "fl. oz.",
+        "bmi": "kg/m²",
+    },
+}
+
+
 class HADiscoveryView(BabyBuddyAPIView):
     """Metadata endpoint consumed by the Home Assistant integration.
 
@@ -1094,11 +1114,24 @@ class HADiscoveryView(BabyBuddyAPIView):
         from babybuddy import VERSION
         from mqtt.utils import get_mqtt_ha_settings
 
+        unit_system = getattr(request.user, "settings", None)
+        unit_system = (
+            unit_system.unit_system
+            if unit_system and unit_system.unit_system
+            else "metric"
+        )
+        units = SENSOR_UNITS.get(unit_system, SENSOR_UNITS["metric"])
+        sensors = [
+            {**s, "unit_of_measurement": units[s["key"]]} if s["key"] in units else s
+            for s in self.SENSORS
+        ]
+
         data = {
             "version": 2,
             "babybuddy_version": VERSION,
             "settings": {
                 "mqtt_discovery_enabled": bool(get_mqtt_ha_settings().ha_discovery),
+                "unit_system": unit_system,
             },
             "api": self.API_META,
             "child": self.CHILD_META,
@@ -1110,7 +1143,7 @@ class HADiscoveryView(BabyBuddyAPIView):
                 "stats_topic_pattern": "{prefix}/{child_slug}/stats/state",
                 "topics": self.MQTT_TOPICS,
             },
-            "sensors": self.SENSORS,
+            "sensors": sensors,
             "stats_sensors": self.STATS_SENSORS,
             "binary_sensors": self.BINARY_SENSORS,
             "selects": [

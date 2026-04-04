@@ -1067,6 +1067,7 @@ class TestProfileAPITestCase(APITestCase):
             | {
                 "language": "en-US",
                 "timezone": "UTC",
+                "unit_system": "metric",
             },
         )
         self.assertEqual(
@@ -1128,6 +1129,8 @@ class TestHADiscoveryView(APITestCase):
         settings = response.data["settings"]
         self.assertIn("mqtt_discovery_enabled", settings)
         self.assertIsInstance(settings["mqtt_discovery_enabled"], bool)
+        self.assertIn("unit_system", settings)
+        self.assertEqual(settings["unit_system"], "metric")
 
     def test_api_section(self):
         response = self.client.get(self.endpoint)
@@ -1431,6 +1434,39 @@ class TestHADiscoveryView(APITestCase):
         self.assertNotIn("tags", add_child["fields"])
         self.assertNotIn("notes", delete["fields"])
         self.assertNotIn("tags", delete["fields"])
+
+    def test_sensor_units_metric(self):
+        response = self.client.get(self.endpoint)
+        sensors = {s["key"]: s for s in response.data["sensors"]}
+        self.assertEqual(sensors["temperature"]["unit_of_measurement"], "°C")
+        self.assertEqual(sensors["weight"]["unit_of_measurement"], "kg")
+        self.assertEqual(sensors["height"]["unit_of_measurement"], "cm")
+        self.assertEqual(sensors["head-circumference"]["unit_of_measurement"], "cm")
+        self.assertEqual(sensors["pumping"]["unit_of_measurement"], "mL")
+        self.assertEqual(sensors["bmi"]["unit_of_measurement"], "kg/m²")
+
+    def test_sensor_units_imperial(self):
+        from babybuddy.models import get_user_model
+
+        user = get_user_model().objects.get(username="admin")
+        user.settings.unit_system = "imperial"
+        user.settings.save()
+        response = self.client.get(self.endpoint)
+        sensors = {s["key"]: s for s in response.data["sensors"]}
+        self.assertEqual(sensors["temperature"]["unit_of_measurement"], "°F")
+        self.assertEqual(sensors["weight"]["unit_of_measurement"], "lb")
+        self.assertEqual(sensors["height"]["unit_of_measurement"], "in")
+        self.assertEqual(sensors["head-circumference"]["unit_of_measurement"], "in")
+        self.assertEqual(sensors["pumping"]["unit_of_measurement"], "fl. oz.")
+        self.assertEqual(sensors["bmi"]["unit_of_measurement"], "kg/m²")
+
+    def test_sensor_units_unchanged(self):
+        response = self.client.get(self.endpoint)
+        sensors = {s["key"]: s for s in response.data["sensors"]}
+        self.assertEqual(sensors["sleep"]["unit_of_measurement"], "min")
+        self.assertEqual(sensors["tummy-times"]["unit_of_measurement"], "min")
+        self.assertNotIn("unit_of_measurement", sensors["changes"])
+        self.assertNotIn("unit_of_measurement", sensors["feedings"])
 
     def test_requires_auth(self):
         self.client.logout()

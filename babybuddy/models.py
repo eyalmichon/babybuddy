@@ -117,6 +117,15 @@ class Settings(models.Model):
         max_length=100,
         verbose_name=_("Timezone"),
     )
+    unit_system = models.CharField(
+        choices=[
+            ("metric", _("Metric")),
+            ("imperial", _("Imperial")),
+        ],
+        default="metric",
+        max_length=10,
+        verbose_name=_("Unit System"),
+    )
     pagination_count = models.PositiveIntegerField(
         choices=[
             (10, _("%(count)d Per Page") % {"count": 10}),

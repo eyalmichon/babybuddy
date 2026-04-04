@@ -385,6 +385,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "user",
             "language",
             "timezone",
+            "unit_system",
             "api_key",
         )
         extra_kwargs = {k: {"read_only": True} for k in fields}
