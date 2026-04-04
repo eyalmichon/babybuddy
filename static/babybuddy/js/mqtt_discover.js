@@ -108,11 +108,10 @@
       .catch(function (err) {
         resetBtn();
         resultsDiv.style.display = "block";
-        resultsDiv.innerHTML = "";
-        var errMsg = document.createElement("small");
-        errMsg.className = "text-danger d-block mt-1";
-        errMsg.textContent = "Discovery failed: " + err.message;
-        resultsDiv.appendChild(errMsg);
+        resultsDiv.innerHTML =
+          '<small class="text-danger d-block mt-1">Discovery failed: ' +
+          err.message +
+          "</small>";
       });
   });
 

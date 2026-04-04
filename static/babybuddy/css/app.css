@@ -11871,6 +11871,14 @@ textarea.form-control-lg {
   row-gap: 10px;
 }
 
+.pill-dot {
+  display: inline-block;
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
 @media (max-width: 575.98px) {
   .pill-container > label {
     flex-grow: 1;
