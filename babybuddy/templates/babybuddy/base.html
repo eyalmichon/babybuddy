@@ -25,6 +25,13 @@
         <link rel="shortcut icon"
               href="{% static "babybuddy/root/favicon.ico" %}?v=20211218" />
         <link rel="stylesheet" href="{% static "babybuddy/css/app.css" %}" />
+        <style>
+            :root {
+                {% for name, meta in activity_types.items %}{% if meta.color %}
+                --bb-{{ name }}-color: {{ meta.color }};
+                {% endif %}{% endfor %}
+            }
+        </style>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-title" content="Baby Buddy" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black" />

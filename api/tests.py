@@ -1113,6 +1113,7 @@ class TestHADiscoveryView(APITestCase):
             "sensors",
             "stats_sensors",
             "binary_sensors",
+            "sensor_groups",
             "selects",
             "services",
         }
@@ -1467,6 +1468,78 @@ class TestHADiscoveryView(APITestCase):
         self.assertEqual(sensors["tummy-times"]["unit_of_measurement"], "min")
         self.assertNotIn("unit_of_measurement", sensors["changes"])
         self.assertNotIn("unit_of_measurement", sensors["feedings"])
+
+    def test_sensor_groups_structure(self):
+        from core.metadata import SENSOR_GROUPS
+
+        response = self.client.get(self.endpoint)
+        groups = response.data["sensor_groups"]
+        self.assertEqual(len(groups), len(SENSOR_GROUPS))
+        required_keys = {"id", "title", "icon", "order", "default_collapsed", "color"}
+        for group in groups:
+            self.assertTrue(
+                required_keys.issubset(group.keys()),
+                f"Group {group.get('id')} missing keys: "
+                f"{required_keys - set(group.keys())}",
+            )
+            self.assertIsInstance(group["order"], int)
+            self.assertIsInstance(group["default_collapsed"], bool)
+            self.assertTrue(group["color"].startswith("#"))
+
+    def test_all_sensors_have_group(self):
+        response = self.client.get(self.endpoint)
+        groups = response.data["sensor_groups"]
+        valid_group_ids = {g["id"] for g in groups}
+        for section in ("sensors", "stats_sensors", "binary_sensors"):
+            for sensor in response.data[section]:
+                self.assertIn(
+                    "group",
+                    sensor,
+                    f"{section} sensor '{sensor['key']}' missing 'group'",
+                )
+                self.assertIn(
+                    sensor["group"],
+                    valid_group_ids,
+                    f"{section} sensor '{sensor['key']}' has invalid "
+                    f"group '{sensor['group']}'",
+                )
+
+    def test_sensor_colors_from_registry(self):
+        from core.metadata import ACTIVITY_TYPES, SENSOR_KEY_TO_ACTIVITY
+
+        response = self.client.get(self.endpoint)
+        sensors = {s["key"]: s for s in response.data["sensors"]}
+        for sensor_key, activity_key in SENSOR_KEY_TO_ACTIVITY.items():
+            if sensor_key not in sensors:
+                continue
+            expected_color = ACTIVITY_TYPES[activity_key]["color"]
+            if expected_color:
+                self.assertEqual(
+                    sensors[sensor_key].get("color"),
+                    expected_color,
+                    f"Sensor '{sensor_key}' color mismatch",
+                )
+            else:
+                self.assertNotIn(
+                    "color",
+                    sensors[sensor_key],
+                    f"Sensor '{sensor_key}' should have no color",
+                )
+
+    def test_sensor_icons_from_registry(self):
+        from core.metadata import ACTIVITY_TYPES, SENSOR_KEY_TO_ACTIVITY
+
+        response = self.client.get(self.endpoint)
+        sensors = {s["key"]: s for s in response.data["sensors"]}
+        for sensor_key, activity_key in SENSOR_KEY_TO_ACTIVITY.items():
+            if sensor_key not in sensors:
+                continue
+            expected_icon = ACTIVITY_TYPES[activity_key]["mdi_icon"]
+            self.assertEqual(
+                sensors[sensor_key]["icon"],
+                expected_icon,
+                f"Sensor '{sensor_key}' icon should come from ACTIVITY_TYPES",
+            )
 
     def test_requires_auth(self):
         self.client.logout()

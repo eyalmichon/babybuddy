@@ -12115,47 +12115,55 @@ textarea.form-control-lg {
 }
 
 .card-diaperchange {
-  border-color: #a72431;
+  border-color: var(--bb-diaperchange-color);
 }
 .card-diaperchange .card-header, .card-diaperchange .card-header a {
-  background-color: #a72431;
+  background-color: var(--bb-diaperchange-color);
   color: #f8f9fa;
 }
 .card-diaperchange .card-body {
-  color: #a72431;
+  color: var(--bb-diaperchange-color);
 }
 .card-diaperchange .progress {
   height: 2rem;
 }
 
-.card-feeding,
-.card-pumping {
-  border-color: #37abe9;
+.card-feeding {
+  border-color: var(--bb-feeding-color);
 }
-.card-feeding .card-header, .card-feeding .card-header a,
-.card-pumping .card-header,
-.card-pumping .card-header a {
-  background-color: #37abe9;
+.card-feeding .card-header, .card-feeding .card-header a {
+  background-color: var(--bb-feeding-color);
   color: #f8f9fa;
 }
-.card-feeding .card-body,
-.card-pumping .card-body {
-  color: #37abe9;
+.card-feeding .card-body {
+  color: var(--bb-feeding-color);
 }
-.card-feeding .card-body .last-feeding-method,
-.card-pumping .card-body .last-feeding-method {
+.card-feeding .card-body .last-feeding-method {
   font-size: 2em;
 }
-.card-feeding .progress,
+.card-feeding .progress {
+  height: 2rem;
+}
+
+.card-pumping {
+  border-color: var(--bb-pumping-color);
+}
+.card-pumping .card-header, .card-pumping .card-header a {
+  background-color: var(--bb-pumping-color);
+  color: #f8f9fa;
+}
+.card-pumping .card-body {
+  color: var(--bb-pumping-color);
+}
 .card-pumping .progress {
   height: 2rem;
 }
 
 .card-sleep {
-  border-color: #ff8f00;
+  border-color: var(--bb-sleep-color);
 }
 .card-sleep .card-header, .card-sleep .card-header a {
-  background-color: #ff8f00;
+  background-color: var(--bb-sleep-color);
   color: #f8f9fa;
 }
 
@@ -12177,25 +12185,25 @@ textarea.form-control-lg {
 }
 
 .card-medication {
-  border-color: #7c4dff;
+  border-color: var(--bb-medication-color);
 }
 .card-medication .card-header, .card-medication .card-header a {
-  background-color: #7c4dff;
+  background-color: var(--bb-medication-color);
   color: #f8f9fa;
 }
 .card-medication .card-body {
-  color: #7c4dff;
+  color: var(--bb-medication-color);
 }
 
 .card-tummytime {
-  border-color: #239556;
+  border-color: var(--bb-tummytime-color);
 }
 .card-tummytime .card-header, .card-tummytime .card-header a {
-  background-color: #239556;
+  background-color: var(--bb-tummytime-color);
   color: #f8f9fa;
 }
 .card-tummytime .card-body {
-  color: #239556;
+  color: var(--bb-tummytime-color);
 }
 
 .child-actions {

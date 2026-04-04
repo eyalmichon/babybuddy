@@ -40,15 +40,15 @@
 }
 
 .card-diaperchange {
-    border-color: map.get($theme-colors, 'danger');
+    border-color: var(--bb-diaperchange-color);
 
     .card-header, .card-header a {
-        background-color: map.get($theme-colors, 'danger');
+        background-color: var(--bb-diaperchange-color);
         color: map.get($theme-colors, 'light');
     }
 
     .card-body {
-        color: map.get($theme-colors, 'danger');
+        color: var(--bb-diaperchange-color);
     }
 
     .progress {
@@ -56,19 +56,17 @@
     }
 }
 
-.card-feeding,
-.card-pumping {
-    border-color: map.get($theme-colors, 'primary');
+.card-feeding {
+    border-color: var(--bb-feeding-color);
 
     .card-header, .card-header a {
-        background-color: map.get($theme-colors, 'primary');
+        background-color: var(--bb-feeding-color);
         color: map.get($theme-colors, 'light');
     }
 
     .card-body {
-        color: map.get($theme-colors, 'primary');
+        color: var(--bb-feeding-color);
 
-        // Last feeding method header in card.
         .last-feeding-method {
             font-size: 2em;
         }
@@ -79,11 +77,28 @@
     }
 }
 
-.card-sleep {
-    border-color: map.get($theme-colors, 'secondary');
+.card-pumping {
+    border-color: var(--bb-pumping-color);
 
     .card-header, .card-header a {
-        background-color: map.get($theme-colors, 'secondary');
+        background-color: var(--bb-pumping-color);
+        color: map.get($theme-colors, 'light');
+    }
+
+    .card-body {
+        color: var(--bb-pumping-color);
+    }
+
+    .progress {
+        height: $progress-height * 2;
+    }
+}
+
+.card-sleep {
+    border-color: var(--bb-sleep-color);
+
+    .card-header, .card-header a {
+        background-color: var(--bb-sleep-color);
         color: map.get($theme-colors, 'light');
     }
 }
@@ -110,27 +125,27 @@
 }
 
 .card-medication {
-    border-color: $purple;
+    border-color: var(--bb-medication-color);
 
     .card-header, .card-header a {
-        background-color: $purple;
+        background-color: var(--bb-medication-color);
         color: map.get($theme-colors, 'light');
     }
 
     .card-body {
-        color: $purple;
+        color: var(--bb-medication-color);
     }
 }
 
 .card-tummytime {
-    border-color: map.get($theme-colors, 'success');
+    border-color: var(--bb-tummytime-color);
 
     .card-header, .card-header a {
-        background-color: map.get($theme-colors, 'success');
+        background-color: var(--bb-tummytime-color);
         color: map.get($theme-colors, 'light');
     }
 
     .card-body {
-        color: map.get($theme-colors, 'success');
+        color: var(--bb-tummytime-color);
     }
 }

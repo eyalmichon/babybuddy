@@ -18,6 +18,13 @@ from core.choices import (
 from babybuddy import models as babybuddy_models
 from mqtt.stats import compute_stats
 
+from core.metadata import (
+    ACTIVITY_TYPES,
+    SENSOR_KEY_TO_ACTIVITY,
+    SENSOR_GROUPS,
+    SENSOR_GROUP_MAP,
+)
+
 from . import serializers, filters
 from .base import BabyBuddyAPIView, BabyBuddyModelViewSet
 
@@ -372,56 +379,56 @@ class HADiscoveryView(BabyBuddyAPIView):
             "name": "Last BMI",
             "state_key": "bmi",
             "state_class": "measurement",
-            "icon": "mdi:human",
+            "icon": ACTIVITY_TYPES["bmi"]["mdi_icon"],
         },
         {
             "key": "changes",
             "name": "Last Diaper Change",
             "state_key": "time",
             "device_class": "timestamp",
-            "icon": "mdi:paper-roll-outline",
+            "icon": ACTIVITY_TYPES["diaperchange"]["mdi_icon"],
         },
         {
             "key": "feedings",
             "name": "Last Feeding",
             "state_key": "start",
             "device_class": "timestamp",
-            "icon": "mdi:baby-bottle-outline",
+            "icon": ACTIVITY_TYPES["feeding"]["mdi_icon"],
         },
         {
             "key": "head-circumference",
             "name": "Last Head Circumference",
             "state_key": "head_circumference",
             "state_class": "measurement",
-            "icon": "mdi:tape-measure",
+            "icon": ACTIVITY_TYPES["head_circumference"]["mdi_icon"],
         },
         {
             "key": "height",
             "name": "Last Height",
             "state_key": "height",
             "state_class": "measurement",
-            "icon": "mdi:human-male-height",
+            "icon": ACTIVITY_TYPES["height"]["mdi_icon"],
         },
         {
             "key": "medications",
             "name": "Last Medication",
             "state_key": "time",
             "device_class": "timestamp",
-            "icon": "mdi:pill",
+            "icon": ACTIVITY_TYPES["medication"]["mdi_icon"],
         },
         {
             "key": "notes",
             "name": "Last Note",
             "state_key": "time",
             "device_class": "timestamp",
-            "icon": "mdi:note-text",
+            "icon": ACTIVITY_TYPES["note"]["mdi_icon"],
         },
         {
             "key": "pumping",
             "name": "Last Pumping",
             "state_key": "amount",
             "state_class": "measurement",
-            "icon": "mdi:water-pump",
+            "icon": ACTIVITY_TYPES["pumping"]["mdi_icon"],
         },
         {
             "key": "sleep",
@@ -430,7 +437,7 @@ class HADiscoveryView(BabyBuddyAPIView):
             "transform": "duration_to_minutes",
             "state_class": "measurement",
             "unit_of_measurement": "min",
-            "icon": "mdi:sleep",
+            "icon": ACTIVITY_TYPES["sleep"]["mdi_icon"],
         },
         {
             "key": "temperature",
@@ -438,14 +445,14 @@ class HADiscoveryView(BabyBuddyAPIView):
             "state_key": "temperature",
             "device_class": "temperature",
             "state_class": "measurement",
-            "icon": "mdi:thermometer",
+            "icon": ACTIVITY_TYPES["temperature"]["mdi_icon"],
         },
         {
             "key": "timers",
             "name": "Last Timer",
             "state_key": "start",
             "device_class": "timestamp",
-            "icon": "mdi:timer-outline",
+            "icon": ACTIVITY_TYPES["timer"]["mdi_icon"],
         },
         {
             "key": "tummy-times",
@@ -454,14 +461,14 @@ class HADiscoveryView(BabyBuddyAPIView):
             "transform": "duration_to_minutes",
             "state_class": "measurement",
             "unit_of_measurement": "min",
-            "icon": "mdi:human-child",
+            "icon": ACTIVITY_TYPES["tummytime"]["mdi_icon"],
         },
         {
             "key": "weight",
             "name": "Last Weight",
             "state_key": "weight",
             "state_class": "measurement",
-            "icon": "mdi:scale-bathroom",
+            "icon": ACTIVITY_TYPES["weight"]["mdi_icon"],
         },
     ]
 
@@ -1110,6 +1117,23 @@ class HADiscoveryView(BabyBuddyAPIView):
         },
     ]
 
+    @staticmethod
+    def _enrich_sensors(sensor_list):
+        """Add ``color`` and ``group`` to each sensor from the central registry."""
+        enriched = []
+        for s in sensor_list:
+            s = dict(s)
+            activity_key = SENSOR_KEY_TO_ACTIVITY.get(s["key"])
+            if activity_key:
+                color = ACTIVITY_TYPES[activity_key].get("color")
+                if color:
+                    s["color"] = color
+            group = SENSOR_GROUP_MAP.get(s["key"])
+            if group:
+                s["group"] = group
+            enriched.append(s)
+        return enriched
+
     def get(self, request):
         from babybuddy import VERSION
         from mqtt.utils import get_mqtt_ha_settings
@@ -1143,9 +1167,10 @@ class HADiscoveryView(BabyBuddyAPIView):
                 "stats_topic_pattern": "{prefix}/{child_slug}/stats/state",
                 "topics": self.MQTT_TOPICS,
             },
-            "sensors": sensors,
-            "stats_sensors": self.STATS_SENSORS,
-            "binary_sensors": self.BINARY_SENSORS,
+            "sensors": self._enrich_sensors(sensors),
+            "stats_sensors": self._enrich_sensors(self.STATS_SENSORS),
+            "binary_sensors": self._enrich_sensors(self.BINARY_SENSORS),
+            "sensor_groups": SENSOR_GROUPS,
             "selects": [
                 {
                     "key": "diaper_color",
