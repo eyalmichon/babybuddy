@@ -1169,12 +1169,13 @@ class TestHADiscoveryView(APITestCase):
         response = self.client.get(self.endpoint)
         mqtt = response.data["mqtt"]
         self.assertIn("topic_pattern", mqtt)
-        self.assertIn("stats_topic_pattern", mqtt)
+        self.assertNotIn("stats_topic_pattern", mqtt)
         self.assertEqual(
             mqtt["topic_pattern"],
             "{prefix}/{child_slug}/{data_type}/state",
         )
         self.assertIn("topics", mqtt)
+        self.assertEqual(mqtt["topics"]["stats"], "stats")
 
     def test_selects_includes_medication_units(self):
         response = self.client.get(self.endpoint)

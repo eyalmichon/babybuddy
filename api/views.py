@@ -371,6 +371,7 @@ class HADiscoveryView(BabyBuddyAPIView):
         "medication": "medications",
         "medication_schedule": "medication_schedules",
         "timer": "timers",
+        "stats": "stats",
     }
 
     SENSORS = [
@@ -387,6 +388,7 @@ class HADiscoveryView(BabyBuddyAPIView):
             "state_key": "time",
             "device_class": "timestamp",
             "icon": ACTIVITY_TYPES["diaperchange"]["mdi_icon"],
+            "reverse_transform": "diaper_type_to_booleans",
         },
         {
             "key": "feedings",
@@ -1150,7 +1152,6 @@ class HADiscoveryView(BabyBuddyAPIView):
             "mqtt": {
                 "default_topic_prefix": "babybuddy",
                 "topic_pattern": "{prefix}/{child_slug}/{data_type}/state",
-                "stats_topic_pattern": "{prefix}/{child_slug}/stats/state",
                 "topics": self.MQTT_TOPICS,
             },
             "sensors": self._enrich_sensors(sensors),
