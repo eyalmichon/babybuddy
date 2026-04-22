@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.utils.translation import gettext as _
 
-import plotly.offline as plotly
 import plotly.graph_objs as go
+import plotly.io as pio
 
 from reports import utils
 
@@ -30,5 +30,5 @@ def head_circumference_change(objects):
     layout_args["yaxis"]["title"] = _("Head Circumference")
 
     fig = go.Figure({"data": [trace], "layout": go.Layout(**layout_args)})
-    output = plotly.plot(fig, output_type="div", include_plotlyjs=False)
+    output = pio.to_html(fig, include_plotlyjs=False, full_html=False)
     return utils.split_graph_output(output)

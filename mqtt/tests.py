@@ -695,7 +695,7 @@ class HADiscoveryEndpointTests(TestCase):
         response = self.client.get("/api/ha/discovery")
         stats_sensors = response.json()["stats_sensors"]
 
-        self.assertEqual(len(stats_sensors), 6)
+        self.assertEqual(len(stats_sensors), 4)
         for sensor in stats_sensors:
             self.assertIn("key", sensor)
             self.assertIn("name", sensor)
@@ -782,7 +782,13 @@ class MqttSettingsReconnectTests(TestCase):
         )
         self.assertTrue(self._apps._mqtt_settings_dirty)
 
-        with patch("mqtt.client.mqtt_client") as mock_client:
+        with (
+            patch("mqtt.client.mqtt_client") as mock_client,
+            patch(
+                "mqtt.utils.get_mqtt_settings",
+                return_value=_mock_mqtt_settings(enabled=True),
+            ),
+        ):
             mock_client.is_started = True
             self._apps._on_request_finished(sender=None)
 
@@ -798,7 +804,13 @@ class MqttSettingsReconnectTests(TestCase):
 
         self.assertTrue(self._apps._mqtt_settings_dirty)
 
-        with patch("mqtt.client.mqtt_client") as mock_client:
+        with (
+            patch("mqtt.client.mqtt_client") as mock_client,
+            patch(
+                "mqtt.utils.get_mqtt_settings",
+                return_value=_mock_mqtt_settings(enabled=True),
+            ),
+        ):
             mock_client.is_started = True
             self._apps._on_request_finished(sender=None)
 
@@ -857,7 +869,13 @@ class MqttSettingsReconnectTests(TestCase):
         )
         self.assertTrue(self._apps._ha_discovery_disabled)
 
-        with patch("mqtt.client.mqtt_client") as mock_client:
+        with (
+            patch("mqtt.client.mqtt_client") as mock_client,
+            patch(
+                "mqtt.utils.get_mqtt_settings",
+                return_value=_mock_mqtt_settings(enabled=True),
+            ),
+        ):
             mock_client.is_started = True
             self._apps._on_request_finished(sender=None)
 

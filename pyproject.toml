@@ -1,6 +1,6 @@
 [project]
 name = "babybuddy"
-version = "2.13.5"
+version = "2.13.6"
 description = "A buddy for babies! Helps caregivers track sleep, feedings, diaper changes, and more."
 license = "BSD-2-Clause"
 requires-python = ">=3.10"
@@ -24,7 +24,7 @@ dependencies = [
     "inflection",
     "paho-mqtt",
     "pillow",
-    "plotly~=5.24",
+    "plotly~=6.6",
     "psycopg2-binary",
     "python-dotenv",
     "pyyaml",

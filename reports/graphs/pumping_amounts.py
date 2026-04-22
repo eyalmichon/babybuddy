@@ -2,8 +2,8 @@
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-import plotly.offline as plotly
 import plotly.graph_objs as go
+import plotly.io as pio
 
 from reports import utils
 
@@ -68,5 +68,5 @@ def pumping_amounts(objects):
 
     fig = go.Figure({"data": traces, "layout": go.Layout(**layout_args)})
     fig.update_layout(barmode="stack", annotations=total_labels)
-    output = plotly.plot(fig, output_type="div", include_plotlyjs=False)
+    output = pio.to_html(fig, include_plotlyjs=False, full_html=False)
     return utils.split_graph_output(output)

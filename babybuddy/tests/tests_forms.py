@@ -47,6 +47,7 @@ class FormsTestCase(TestCase):
             "dashboard_refresh_rate": "",
             "language": "en-US",
             "timezone": "UTC",
+            "unit_system": "metric",
             "next": "/user/settings/",
             "pagination_count": 25,
         }
@@ -185,17 +186,13 @@ class FormsTestCase(TestCase):
             get_user_model().objects.get(pk=self.user.id).settings.api_key()
         )
 
-        params = self.settings_template.copy()
-        params["api_key_regenerate"] = "Regenerate"
-
-        page = self.c.post("/user/settings/", params, follow=True)
+        params = {"api_key_regenerate": "Regenerate"}
+        page = self.c.post("/user/add-device/", params, follow=True)
         self.assertEqual(page.status_code, 200)
         new_api_key = get_user_model().objects.get(pk=self.user.id).settings.api_key()
         self.assertNotEqual(api_key_before, new_api_key)
 
-        # API key can also be regenerated on the add-device page
         api_key_before = new_api_key
-        params = {"api_key_regenerate": "Regenerate"}
         page = self.c.post("/user/add-device/", params, follow=True)
         self.assertEqual(page.status_code, 200)
         new_api_key = get_user_model().objects.get(pk=self.user.id).settings.api_key()
@@ -236,7 +233,8 @@ class FormsTestCase(TestCase):
         params["timezone"] = "America/Los_Angeles"
         page = self.c.post("/user/settings/", data=params, follow=True)
         self.assertEqual(page.status_code, 200)
-        self.assertEqual(timezone.get_current_timezone_name(), params["timezone"])
+        self.user.refresh_from_db()
+        self.assertEqual(str(self.user.settings.timezone), params["timezone"])
 
     def test_user_settings_dashboard_hide_empty_on(self):
         self.c.login(**self.credentials)

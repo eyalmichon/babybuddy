@@ -4,8 +4,8 @@ from collections import OrderedDict
 from django.utils import timezone, formats
 from django.utils.translation import gettext as _
 
-import plotly.offline as plotly
 import plotly.graph_objs as go
+import plotly.io as pio
 import plotly.colors as colors
 
 from core.utils import duration_string
@@ -187,7 +187,7 @@ def sleep_pattern(sleeps):
     layout_args["yaxis"]["tickfont"] = {"size": 10}
 
     fig = go.Figure({"data": traces, "layout": go.Layout(**layout_args)})
-    output = plotly.plot(fig, output_type="div", include_plotlyjs=False)
+    output = pio.to_html(fig, include_plotlyjs=False, full_html=False)
     return utils.split_graph_output(output)
 
 
@@ -207,7 +207,7 @@ def _add_adjustment(adjustment, days):
     :param blocks: List of days
     """
     column = adjustment.pop("column")
-    if not column in days:
+    if column not in days:
         days[column] = []
     # Fake (0) entry to keep the color switching logic working.
     days[column].append({"time": 0, "label": 0})

@@ -3,8 +3,8 @@ from django.db.models import Count, Sum
 from django.db.models.functions import TruncDate
 from django.utils.translation import gettext as _
 
-import plotly.offline as plotly
 import plotly.graph_objs as go
+import plotly.io as pio
 
 from core.utils import duration_parts
 
@@ -64,7 +64,7 @@ def tummytime_duration(instances):
     fig = go.Figure(
         {"data": [trace_avg, trace_count], "layout": go.Layout(**layout_args)}
     )
-    output = plotly.plot(fig, output_type="div", include_plotlyjs=False)
+    output = pio.to_html(fig, include_plotlyjs=False, full_html=False)
     return utils.split_graph_output(output)
 
 

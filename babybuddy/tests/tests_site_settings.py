@@ -42,10 +42,15 @@ class SiteSettingsTestCase(TestCase):
 
     def test_settings_nap_start(self):
         self.c.login(**self.credentials)
-        params = {
-            "core.models__Sleep__nap_start_max": "20:00:00",
-            "core.models__Sleep__nap_start_min": "09:00:00",
-        }
+        page = self.c.get("/settings/")
+        form = page.context["form"]
+        params = {}
+        for name in form.fields:
+            bf = form[name]
+            val = bf.value()
+            params[name] = val if val is not None else ""
+        params["core.models__Sleep__nap_start_max"] = "20:00:00"
+        params["core.models__Sleep__nap_start_min"] = "09:00:00"
         page = self.c.post("/settings/", params, follow=True)
         self.assertEqual(page.status_code, 200)
         self.assertEqual(

@@ -4,8 +4,8 @@ from django.db.models.functions import TruncDate
 from django.utils.translation import gettext as _
 from django.utils.translation import get_language
 
-import plotly.offline as plotly
 import plotly.graph_objs as go
+import plotly.io as pio
 
 from reports import utils
 
@@ -59,10 +59,10 @@ def diaperchange_types(changes):
             "layout": go.Layout(**layout_args),
         }
     )
-    output = plotly.plot(
+    output = pio.to_html(
         fig,
-        output_type="div",
         include_plotlyjs=False,
+        full_html=False,
         config={"locale": get_language()},
     )
     return utils.split_graph_output(output)
